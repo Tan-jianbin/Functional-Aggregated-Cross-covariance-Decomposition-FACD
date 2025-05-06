@@ -1,0 +1,294 @@
+---
+title: "iPOP Preprocessing of Exercise Cohort Data for CCVA"
+author: "Pixu Shi"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+header-includes:
+- \usepackage{xcolor}
+- \usepackage{amsmath}
+- \newcommand{\red}[1]{\textcolor{red}{#1}}
+---
+
+Set working directory
+
+```{r dir}
+rm(list=ls())
+# set working directory to be where the current script is located
+mydir <- dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(mydir)
+
+library(pheatmap)
+library(ggplot2)
+library(ggpubr)
+library(grid)
+
+library(tidyverse)
+library(dplyr)
+library(xlsx)
+library(stringr)
+
+library(PMCMRplus)
+```
+
+## Introduction
+
++ 36 subjects, 5 time points (Baseline, 2 min, 15 min, 30 min, 1 hour) before and after a controlled bout of symptom-limited exercise. Very few missing time points.
++ Plasma and PBMC cytokine, metabolome, proteome, lipidome, and transcriptome were evaluated.
++ [Paper publishing the data](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7299174/)
++ [Study introduction webpage](https://med.stanford.edu/snyderlab/news/May-28-2020.html)
++ [Data download](http://hmp2-data.stanford.edu/)
+
+
+## Subject data
+
+```{r}
+meta_subj <- read.xlsx("data/iPOP/NIHMS1588589-supplement-9.xlsx", 
+                   sheetIndex = 1, startRow = 3, endRow = 39)
+rownames(meta_subj) <- meta_subj$Participant.ID
+colnames(meta_subj)[1] <- "subjectID"
+meta_subj <- meta_subj[sort(meta_subj$subjectID),]
+dim(meta_subj)
+```
+
+
+## Visit data
+
+```{r}
+visits <- read.csv("data/iPOP/iPOP_visit_info.csv", header=T, row.names=1)
+visits$visitID <- rownames(visits)
+visits <- visits %>%
+  filter(Event=="Exercise")
+dim(visits)
+table(visits$Event_Note1)
+old_val <- unique(visits$Event_Note1)
+new_val <- 1:length(old_val)
+visits <- visits %>%
+  mutate(timepoint = recode(Event_Note1, !!!setNames(new_val, old_val)))
+dim(visits)
+```
+
+Function for creating heatmap of feature correlation
+
+```{r}
+plot_tempted_result <- function(res_tempted, dat){
+  # time loading
+  p1 <- plot_time_loading(res_tempted) + 
+    labs(title="time loading") + 
+    theme_bw()
+  # subject loading
+  p2 <- res_tempted$A_hat %>%
+    ggplot() + 
+    geom_point(aes(x=PC1, y=PC2)) +
+    labs(title="subject loading") + 
+    theme_bw()
+  p3 <- res_tempted$B_hat %>%
+    ggplot() + 
+    geom_point(aes(x=PC1, y=PC2)) +
+    labs(title="feature loading") + 
+    theme_bw()
+  # feature loading and correlation
+  pheatmap(cor(log(dat, 10)), show_rownames = FALSE, show_colnames = FALSE,
+           annotation_col=as.data.frame(res_tempted$B_hat), main="correlation of features and feature loading")
+  print(gridExtra::grid.arrange(p1, p2, p3, nrow=1))
+}
+```
+
+
+
+## Metabolomic data
+
+```{r}
+dat_metab <- read.csv("data/iPOP/Exercise_Metabolomics.csv", header=T, row.names=1)
+dim(dat_metab)
+
+meta_metab <- visits[rownames(dat_metab),]
+sum(is.na(meta_metab$timepoint))
+pheatmap(table(meta_metab$SubjectID, meta_metab$timepoint), cluster_cols = F, cluster_rows = F)
+```
+
+### Removing features with substantial outliers
+
+```{r}
+mark_outlier <- function(x){
+  res <- gesdTest(x,20)
+  min(res$p.value)
+}
+
+oo <- apply(dat_metab, 2, mark_outlier)
+
+log_metab <- log10(dat_metab[,oo>10e-20])
+
+pheatmap(cor(log_metab), labels_row = "", labels_col="")
+
+write.csv(log_metab, file="proc_data/exercise_log10_metabolome.csv")
+```
+
+
+
+## Lipidomic
+
+```{r}
+dat_lipid <- read.csv("data/iPOP/Exercise_Lipidomics.csv", header=T, row.names=1)
+dim(dat_lipid)
+
+meta_lipid <- visits[rownames(dat_lipid),]
+pheatmap(table(meta_lipid$SubjectID, meta_lipid$timepoint), cluster_cols = F, cluster_rows = F)
+```
+
+
+
+### Grouping lipids by types
+
+```{r}
+types <- c("TAG", "CE", "CER", "DAG", "DCER", "FFA", "HCER", "LCER", "LPC", "LPE", "PC", "PE", "SM")
+list_lipid <- vector(mode="list", length=length(types))
+names(list_lipid) <- types
+for (jj in 1:length(types)){
+  tmp <- paste0("(?<![A-Za-z])", types[jj])
+  if (jj > 1) tmp <- paste0(tmp, "[.]")
+  list_lipid[[jj]] <- dat_lipid[,grep(tmp, colnames(dat_lipid), perl=T)]
+}
+```
+
+### Smaller TAG groups
+
+```{r}
+TAG_names <- colnames(list_lipid[[1]])
+fa_carbons <- as.numeric(sub(".*FA(\\d+)\\.\\d+", "\\1", TAG_names))
+total_carbon <- as.numeric(sub("TAG(\\d+)\\.\\d+\\.FA\\d+\\.\\d+", "\\1", TAG_names))
+double_bonds <- as.numeric(sub("TAG\\d+\\.(\\d+)\\.FA\\d+\\.\\d+", "\\1", TAG_names))
+
+# Classify into different chain length
+carbon_subgrp <- ifelse(fa_carbons <= 12, "MCFA",
+                  ifelse(fa_carbons < 22, "LCFA", "VLCFA"))
+# classify into differnet saturation
+satur_subgrp <- ifelse(double_bonds == 0, "unsaturated",
+                       ifelse(double_bonds == 1, "mono",
+                              "poly"))
+table(satur_subgrp, carbon_subgrp)
+
+list_lipid$TAG.MCFA <- list_lipid[[1]][,carbon_subgrp=="MCFA"]
+list_lipid$TAG.VLCFA <- list_lipid[[1]][,carbon_subgrp=="VLCFA"]
+list_lipid$TAG.LCFA.unsaturated <- list_lipid[[1]][,carbon_subgrp=="LCFA" & satur_subgrp=="unsaturated"]
+list_lipid$TAG.LCFA.monosaturated <- list_lipid[[1]][,carbon_subgrp=="LCFA" & satur_subgrp=="mono"]
+list_lipid$TAG.LCFA.polysaturated <- list_lipid[[1]][,carbon_subgrp=="LCFA" & satur_subgrp=="poly"]
+list_lipid <- list_lipid[-1]
+
+sapply(list_lipid, length)
+sum(sapply(list_lipid, length))
+```
+
+
+
+### Obtain PC for each 
+
+```{r}
+get_pc <- function(x){
+  x.svd <- svd(scale(log10(x)))
+  kp <- cumsum(x.svd$d^2)/sum(x.svd$d^2)
+  x.score <- x.svd$u[,kp < 0.95, drop=F]
+  x.loading <- x.svd$v[,kp < 0.95, drop=F]
+  sgn <- sign(colSums(x.loading))
+  x.score <- sweep(x.score, 2, sgn, FUN="*")
+  #x.loading <- sweep(x.loading, 2, sgn, FUN="*")
+  #print(colSums(x.loading))
+  colnames(x.score) <- paste0("pc",1:ncol(x.score))
+  rownames(x.score) <- rownames(x)
+  return(x.score)
+}
+log_lipid_pc <- lapply(list_lipid, get_pc)
+sapply(log_lipid_pc, dim)
+for (ii in 1:length(log_lipid_pc)){
+  colnames(log_lipid_pc[[ii]]) <- paste0(names(log_lipid_pc)[ii], ".", colnames(log_lipid_pc[[ii]]))
+}
+sapply(log_lipid_pc, dim)
+log_lipid_pc <- do.call(cbind, log_lipid_pc)
+print(dim(log_lipid_pc))
+
+pheatmap(cor(log_lipid_pc))
+
+write.csv(log_lipid_pc, file="proc_data/exercise_log10_lipidome_pc.csv")
+```
+
+
+
+## Immunoassay data
+
+### Check missing values
+
+```{r}
+dat_cytokine <- read.csv("data/iPOP/Exercise_targ_proteomics.csv", header=T, row.names=1)
+dim(dat_cytokine)
+rowSums(is.na(dat_cytokine)) # one sample has too many missing values
+dat_cytokine <- dat_cytokine[rownames(dat_cytokine)!="ZOZOW1T-E12",]
+sum(is.na(dat_cytokine))
+meta_cytokine <- visits[rownames(dat_cytokine),]
+sum(is.na(meta_cytokine$timepoint))
+pheatmap(table(meta_cytokine$SubjectID, meta_cytokine$timepoint), cluster_cols = F, cluster_rows = F)
+```
+
+
+```{r}
+log_cytokine <- log10(dat_cytokine)
+
+pheatmap(cor(log_cytokine))
+
+write.csv(log_cytokine, file="proc_data/exercise_log10_cytokine.csv")
+```
+
+
+## Untargeted Proteomic data
+
+```{r}
+dat_protein <- read.csv("data/iPOP/Exercise_Proteomics.csv", header=T, row.names=1)
+dim(dat_protein)
+
+meta_protein <- visits[rownames(dat_protein),]
+pheatmap(table(meta_protein$SubjectID, meta_protein$timepoint), cluster_cols = F, cluster_rows = F)
+```
+
+```{r}
+log_protein <- log10(dat_protein)
+range(log_protein)
+
+pheatmap(cor(log_protein))
+
+write.csv(log_protein, file="proc_data/exercise_log10_protein.csv")
+```
+
+
+## Overlap all modalities
+
+```{r}
+sID <- Reduce(intersect, list(rownames(log_cytokine), rownames(log_metab), rownames(log_lipid_pc), rownames(log_protein)))
+sID <- sort(sID)
+length(sID)
+dat_all <- list(meta_subj=meta_subj,
+                meta_visit = visits[sID,],
+                cytokine = dat_cytokine[sID,],
+                metabolome = dat_metab[sID,],
+                lipid = dat_lipid[sID,],
+                protein = dat_protein[sID,]
+)
+sapply(dat_all, dim)
+sapply(dat_all[2:5], function(x){sum(x==0)})
+#saveRDS(dat_all, file="proc_data/exercise_multiomic.RDS")
+
+dat_all <- list(meta_subj=meta_subj,
+                meta_visit = visits[sID,],
+                cytokine = log_cytokine[sID,],
+                metabolome = log_metab[sID,],
+                lipid = log_lipid_pc[sID,],
+                protein = log_protein[sID,]
+)
+sapply(dat_all, dim)
+sapply(dat_all[2:5], function(x){sum(x==0)})
+sapply(dat_all[3:6], range)
+sapply(dat_all, dim)
+saveRDS(dat_all, file="proc_data/exercise_log10_multiomic.RDS")
+```
+
