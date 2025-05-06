@@ -1,0 +1,575 @@
+---
+title: "Data analysis"
+author: "Jianbin Tan"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include = FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Set working directory
+```{r dir}
+rm(list=ls())
+# set working directory to be where the current script is located
+mydir <- dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(mydir)
+```
+
+# Input functions and packages
+
+```{r}
+source("Function.R")
+source("LCCA_function.R")
+library(network)
+library(sna)
+library(ggplot2)
+# library(ggnet)
+library(ggrepel)
+library(igraph)
+library(ggraph)
+```
+
+# Data Illustration
+```{r}
+load("Data/Protein.rda")
+load("Data/Metabolomic.rda")
+load("Data/Lipid.rda")
+
+# Protein
+plot_dat <- vector()
+j <- which(Protein$feature_label == "AMYLIN")
+fda_object <- Protein$dat
+for(i in 1:Protein$n){
+  plot_dat <- rbind(plot_dat, data.frame(time = fda_object[[j]][[i]]$time,
+                                         val = fda_object[[j]][[i]]$val,
+                                         fea = rep(i, length(fda_object[[j]][[i]]$val))
+  ))
+}
+title_name <- Protein$feature_label[j]
+plot_dat$fea <- as.factor(plot_dat$fea)
+
+p1 <- ggplot(plot_dat) +
+  geom_line(aes(x = time, y = val, group = fea)) +
+  xlab("") + ylab("") + 
+  theme_bw(base_family = "Times") +
+  scale_x_continuous(breaks = 0:4 / 4, labels = c('Baseline', "2 min", "15 min", "30 min", "60 min")) +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.position = "none",
+        text = element_text(size = 15),
+        panel.border = element_blank(),
+        # text = element_text(family = "STHeiti"),
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 0)) + 
+  labs(title = title_name, fill = "")
+
+plot_dat <- vector()
+j <- which(Protein$feature_label == "IFNB")
+fda_object <- Protein$dat
+for(i in 1:Protein$n){
+  plot_dat <- rbind(plot_dat, data.frame(time = fda_object[[j]][[i]]$time,
+                                         val = fda_object[[j]][[i]]$val,
+                                         fea = rep(i, length(fda_object[[j]][[i]]$val))
+  ))
+}
+title_name <- Protein$feature_label[j]
+plot_dat$fea <- as.factor(plot_dat$fea)
+
+p2 <- ggplot(plot_dat) +
+  geom_line(aes(x = time, y = val, group = fea)) +
+  xlab("") + ylab("") + 
+  theme_bw(base_family = "Times") +
+  scale_x_continuous(breaks = 0:4 / 4, labels = c('Baseline', "2 min", "15 min", "30 min", "60 min")) +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.position = "none",
+        text = element_text(size = 15),
+        panel.border = element_blank(),
+        # text = element_text(family = "STHeiti"),
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 0)) + 
+  labs(title = title_name, fill = "")
+
+# Metabolite
+plot_dat <- vector()
+j <- which(Metabolomic$feature_label == "Hydroxybutyric.acid")
+fda_object <- Metabolomic$dat
+for(i in 1:Protein$n){
+  plot_dat <- rbind(plot_dat, data.frame(time = fda_object[[j]][[i]]$time,
+                                         val = fda_object[[j]][[i]]$val,
+                                         fea = rep(i, length(fda_object[[j]][[i]]$val))
+  ))
+}
+title_name <- Metabolomic$feature_label[j]
+plot_dat$fea <- as.factor(plot_dat$fea)
+
+p3 <- ggplot(plot_dat) +
+  geom_line(aes(x = time, y = val, group = fea)) +
+  xlab("") + ylab("") + 
+  theme_bw(base_family = "Times") +
+  scale_x_continuous(breaks = 0:4 / 4, labels = c('Baseline', "2 min", "15 min", "30 min", "60 min")) +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.position = "none",
+        text = element_text(size = 15),
+        panel.border = element_blank(),
+        # text = element_text(family = "STHeiti"),
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 0)) + 
+  labs(title = title_name, fill = "")
+
+plot_dat <- vector()
+j <- which(Metabolomic$feature_label == "C6H8O8S")
+fda_object <- Metabolomic$dat
+for(i in 1:Protein$n){
+  plot_dat <- rbind(plot_dat, data.frame(time = fda_object[[j]][[i]]$time,
+                                         val = fda_object[[j]][[i]]$val,
+                                         fea = rep(i, length(fda_object[[j]][[i]]$val))
+  ))
+}
+title_name <- Metabolomic$feature_label[j]
+plot_dat$fea <- as.factor(plot_dat$fea)
+
+p4 <- ggplot(plot_dat) +
+  geom_line(aes(x = time, y = val, group = fea)) +
+  xlab("") + ylab("") + 
+  theme_bw(base_family = "Times") +
+  scale_x_continuous(breaks = 0:4 / 4, labels = c('Baseline', "2 min", "15 min", "30 min", "60 min")) +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.position = "none",
+        text = element_text(size = 15),
+        panel.border = element_blank(),
+        # text = element_text(family = "STHeiti"),
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 0)) + 
+  labs(title = title_name, fill = "")
+
+# Lipid
+plot_dat <- vector()
+j <- which(Lipid$feature_label == "TAG.MCFA.pc1")
+fda_object <- Lipid$dat
+for(i in 1:Lipid$n){
+  plot_dat <- rbind(plot_dat, data.frame(time = fda_object[[j]][[i]]$time,
+                                         val = fda_object[[j]][[i]]$val,
+                                         fea = rep(i, length(fda_object[[j]][[i]]$val))
+  ))
+}
+title_name <- Lipid$feature_label[j]
+plot_dat$fea <- as.factor(plot_dat$fea)
+
+p5 <- ggplot(plot_dat) +
+  geom_line(aes(x = time, y = val, group = fea)) +
+  xlab("") + ylab("") + 
+  theme_bw(base_family = "Times") +
+  scale_x_continuous(breaks = 0:4 / 4, labels = c('Baseline', "2 min", "15 min", "30 min", "60 min")) +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.position = "none",
+        text = element_text(size = 15),
+        panel.border = element_blank(),
+        # text = element_text(family = "STHeiti"),
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 0)) + 
+  labs(title = title_name, fill = "")
+
+plot_dat <- vector()
+j <- which(Lipid$feature_label == "DAG.pc1")
+fda_object <- Lipid$dat
+for(i in 1:Lipid$n){
+  plot_dat <- rbind(plot_dat, data.frame(time = fda_object[[j]][[i]]$time,
+                                         val = fda_object[[j]][[i]]$val,
+                                         fea = rep(i, length(fda_object[[j]][[i]]$val))
+  ))
+}
+title_name <- Lipid$feature_label[j]
+plot_dat$fea <- as.factor(plot_dat$fea)
+
+p6 <- ggplot(plot_dat) +
+  geom_line(aes(x = time, y = val, group = fea)) +
+  xlab("") + ylab("") + 
+  theme_bw(base_family = "Times") +
+  scale_x_continuous(breaks = 0:4 / 4, labels = c('Baseline', "2 min", "15 min", "30 min", "60 min")) +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.position = "none",
+        text = element_text(size = 15),
+        panel.border = element_blank(),
+        # text = element_text(family = "STHeiti"),
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 0)) + 
+  labs(title = title_name, fill = "")
+
+# Combined figure
+gridExtra::grid.arrange(p1, p2, p3, p4, p5, p6, ncol = 2)
+p <- gridExtra::grid.arrange(p1, p2, p3, p4, p5, p6, ncol = 2)
+
+ggsave(paste0("Figure/", "data_illu", ".pdf"), p, width = 9, height = 10, dpi = 300)
+```
+
+
+# Protein vs Metabolite
+```{r}
+load("Data/Protein.rda")
+load("Data/Metabolomic.rda")
+
+# Data transformation
+dat_X <- Protein
+dat_Y <- Metabolomic
+rm(Protein, Metabolomic)
+
+n <- dat_X$n # Sample size
+p_X <- dat_X$p # Dimension for the first dataset
+p_Y <- dat_Y$p # Dimension for the second dataset
+
+## Estimation
+grid_num <- 201 # Number of evaluated time points for functions
+time_grid <- seq(0, 1, length.out = grid_num)
+max_var <- floor(c(min(p_X / 2, n), min(p_Y / 2, n)))
+
+Result <- CCVA(grid_num = grid_num,      # Number of evaluated time points for functional objects
+               dat_X, dat_Y,             # Two high-dimensional longitudinal datasets
+               max_var = max_var,        # Maximum number of selected features
+               length_tun = 30,          # Number of evaluated tuning parameters for two datasets
+               print_tuning = F,         # Do we print the tuning result?
+               comp = 1,                 # How many components we estimate?
+               FVE = 0.95,               # Fraction of variance explained for basis function estimation
+               Sparse = T)               # Do we apply sparse estimation?
+
+save(Result, file = "Result/fit_Protein_Metabolomic.rda", version = 2)
+```
+
+
+# Protein vs Lipid
+```{r}
+load("Data/Protein.rda")
+load("Data/Lipid.rda")
+
+# Data transformation
+dat_X <- Protein
+dat_Y <- Lipid
+rm(Protein, Lipid)
+
+n <- dat_X$n # Sample size
+p_X <- dat_X$p # Dimension for the first dataset
+p_Y <- dat_Y$p # Dimension for the second dataset
+
+## Estimation
+grid_num <- 201 # Number of evaluated time points for functions
+time_grid <- seq(0, 1, length.out = grid_num)
+max_var <- floor(c(min(p_X / 2, n), min(p_Y / 2, n)))
+
+Result <- CCVA(grid_num = grid_num, 
+                      dat_X, dat_Y,
+                      max_var = max_var, # Maximum number of selected features
+                      length_tun = 30, # Number of evaluated tuning parameters for two datasets
+                      print_tuning = F,
+                      comp = 1,
+                      FVE = 0.95 # Fraction of variance explained
+)
+
+save(Result, file = "Result/fit_Protein_Lipid.rda", version = 2)
+```
+
+
+
+# Metabolomic vs Lipid
+```{r}
+load("Data/Metabolomic.rda")
+load("Data/Lipid.rda")
+
+# Data transformation
+dat_X <- Metabolomic
+dat_Y <- Lipid
+rm(Metabolomic, Lipid)
+
+n <- dat_X$n # Sample size
+p_X <- dat_X$p # Dimension for the first dataset
+p_Y <- dat_Y$p # Dimension for the second dataset
+
+## Estimation
+grid_num <- 201 # Number of evaluated time points for functions
+time_grid <- seq(0, 1, length.out = grid_num)
+max_var <- floor(c(min(p_X / 2, n), min(p_Y / 2, n)))
+
+Result <- CCVA(grid_num = grid_num, 
+                      dat_X, dat_Y,
+                      max_var = max_var, # Maximum number of selected features
+                      length_tun = 30, # Number of evaluated tuning parameters for two datasets
+                      print_tuning = F,
+                      comp = 1,
+                      FVE = 0.95 # Fraction of variance explained
+)
+
+save(Result, file = "Result/fit_Metabolomic_Lipid.rda", version = 2)
+```
+
+
+
+# Correlation
+```{r}
+file_name <- c("fit_Protein_Metabolomic.rda", "fit_Protein_Lipid.rda",
+               "fit_Metabolomic_Lipid.rda")
+
+var_name <- cbind(var1 = c("Protein", "Protein", "Metabolite"),
+                  var2 = c("Metabolite", "Lipid", "Lipid"))
+
+dat_plot <- data_frame()
+cor <- vector()
+for(i in 1:3){
+  load(paste0("Result/", file_name[i]))
+  X_cca <- Result$Z_X[[1]]
+  Y_cca <- Result$Z_Y[[1]]
+  cor[i] <- abs(crossprod(X_cca, Y_cca) / sqrt(crossprod(X_cca, X_cca) * crossprod(Y_cca, Y_cca)))
+  dat_plot <- rbind(dat_plot, 
+                    data.frame(
+                      X = X_cca, Y = Y_cca,
+                      cor = c(cor[i], rep(NA, n - 1)), var1 = rep(var_name[i,1], n), var2 = rep(var_name[i,2], n),
+                      text_x = c(min(X_cca), rep(NA, n - 1)), text_y = c(max(Y_cca) + 0.2, rep(NA, n - 1))
+                    ))
+ 
+}
+
+dat_plot$var1 <- factor(dat_plot$var1, levels = c("Protein", "Metabolite", "Lipid"))
+dat_plot$var2 <- factor(dat_plot$var2, levels = c("Protein", "Metabolite", "Lipid"))
+
+ggplot(dat_plot) + 
+  geom_point(aes(x = X, y = Y)) +  
+  ggrepel::geom_text_repel(aes(x = text_x, y = text_y, label = paste0("Correlation ", round(cor, 3))), size = 4, max.overlaps = 100) +
+  facet_wrap(~ var1 + var2, scales = "free") +
+  theme_bw(base_family = "Times") +
+  xlab("The first dataset") + ylab("The second dataset") + 
+  theme(legend.position = "none",
+        text = element_text(size = 15),
+        panel.border = element_blank(),
+        # text = element_text(family = "STHeiti"),
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 0))
+
+# ggsave("Figure/score.pdf", width = 8, height = 5, dpi = 100)
+```
+
+
+
+# Important variables
+```{r}
+load("Data/Protein.rda")
+load("Data/Metabolomic.rda")
+load("Data/Lipid.rda")
+time_label <- c('Baseline', "2 min", "15 min", "30 min", "60 min")
+hight_feature <- 10
+
+# Protein vs Metabolite
+load(paste0("Result/", file_name[1]))
+p1 <- plot_CCVA(Result, Protein, Metabolomic, 
+                 hight_feature, # The number of important features you want to highlight
+                 k = 1, " Protein", "Metabolite", (0:4)/4, time_label, "(A)")
+
+# CSV output
+feature_list <- list(feature_X = p1$feature_X, feature_Y = p1$feature_Y)
+max_len <- max(length(feature_list$feature_X), length(feature_list$feature_Y))
+feature_df <- data.frame(
+  "Protein" = c(feature_list$feature_X, rep(NA, max_len - length(feature_list$feature_X))),
+  "Metabolite" = c(feature_list$feature_Y, rep(NA, max_len - length(feature_list$feature_Y)))
+)
+
+write.csv(feature_df, "Result/Protein_Metabolite_features_output.csv", row.names = FALSE)
+
+# Protein vs Lipid
+load(paste0("Result/", file_name[2]))
+p2 <- plot_CCVA(Result, Protein, Lipid, 
+                 hight_feature, # The number of important features you want to highlight
+                 k = 1, " Protein", "Lipid", (0:4)/4, time_label, "(B)")
+
+# CSV output
+feature_list <- list(feature_X = p2$feature_X, feature_Y = p2$feature_Y)
+max_len <- max(length(feature_list$feature_X), length(feature_list$feature_Y))
+feature_df <- data.frame(
+  "Protein" = c(feature_list$feature_X, rep(NA, max_len - length(feature_list$feature_X))),
+  "Lipid" = c(feature_list$feature_Y, rep(NA, max_len - length(feature_list$feature_Y)))
+)
+
+write.csv(feature_df, "Result/Protein_Lipid_features_output.csv", row.names = FALSE)
+
+# Metabolite vs Lipid
+load(paste0("Result/", file_name[3]))
+p3 <- plot_CCVA(Result, Metabolomic, Lipid, 
+                 hight_feature, # The number of important features you want to highlight
+                 k = 1, " Metabolite", "Lipid", 0:4/ 4, time_label, "(C)")
+
+# CSV output
+feature_list <- list(feature_X = p3$feature_X, feature_Y = p3$feature_Y)
+max_len <- max(length(feature_list$feature_X), length(feature_list$feature_Y))
+feature_df <- data.frame(
+  "Metabolite" = c(feature_list$feature_X, rep(NA, max_len - length(feature_list$feature_X))),
+  "Lipid" = c(feature_list$feature_Y, rep(NA, max_len - length(feature_list$feature_Y)))
+)
+
+write.csv(feature_df, "Result/Metabolite_Lipid_features_output.csv", row.names = FALSE)
+
+# Combined figure
+library(cowplot)
+p_all <- plot_grid(p1$plot, p2$plot, p3$plot,
+                   ncol = 1, align = "v")
+ggsave("Figure/functional_loading.pdf", p_all, width = 15, height = 9, dpi = 300)
+```
+
+# Network Plot
+```{r}
+## Loading dataset
+dat_name <- factor(c("Protein", "Metabolite", "Lipid"), level = c("Protein", "Metabolite", "Lipid"))
+nodes <- unique(c(p1$feature_X, p1$feature_Y, p2$feature_X, p2$feature_Y, p3$feature_X, p3$feature_Y))
+group <- sapply(1:length(nodes), function(l) dat_name[which(c(sum(Protein$feature_label == nodes[l]),
+       sum(Metabolomic$feature_label == nodes[l]),
+       sum(Lipid$feature_label == nodes[l])) == 1)])
+
+## Edge matrix
+Edge <- matrix(0, length(nodes), length(nodes))
+# Edge_boot <- array(0, c(length(nodes), length(nodes), 1001))
+
+load(paste0("Result/", file_name[1]))
+mark_X <- p1$feature_X
+mark_Y <- p1$feature_Y
+for(e in 1:length(mark_X)){
+  for(s in 1:length(mark_Y)){
+    Edge[which(nodes == mark_X[e]), which(nodes == mark_Y[s])] <-
+      abs(crossprod(Result$load_X[[1]][Result$var_X[[1]][e],], Result$load_Y[[1]][Result$var_Y[[1]][s],]) /
+      sqrt(crossprod(Result$load_X[[1]][Result$var_X[[1]][e],], Result$load_X[[1]][Result$var_X[[1]][e],]) * crossprod(Result$load_Y[[1]][Result$var_Y[[1]][s],], Result$load_Y[[1]][Result$var_Y[[1]][s],]))) * cor[1]
+  }
+}
+
+load(paste0("Result/", file_name[2]))
+mark_X <- p2$feature_X
+mark_Y <- p2$feature_Y
+for(e in 1:length(mark_X)){
+  for(s in 1:length(mark_Y)){
+    Edge[which(nodes == mark_X[e]), which(nodes == mark_Y[s])] <-
+      abs(crossprod(Result$load_X[[1]][Result$var_X[[1]][e],], Result$load_Y[[1]][Result$var_Y[[1]][s],]) /
+      sqrt(crossprod(Result$load_X[[1]][Result$var_X[[1]][e],], Result$load_X[[1]][Result$var_X[[1]][e],]) * crossprod(Result$load_Y[[1]][Result$var_Y[[1]][s],], Result$load_Y[[1]][Result$var_Y[[1]][s],]))) * cor[2]
+  }
+}  
+
+load(paste0("Result/", file_name[3]))
+mark_X <- p3$feature_X
+mark_Y <- p3$feature_Y
+for(e in 1:length(mark_X)){
+  for(s in 1:length(mark_Y)){
+    Edge[which(nodes == mark_X[e]), which(nodes == mark_Y[s])] <-
+      abs(crossprod(Result$load_X[[1]][Result$var_X[[1]][e],], Result$load_Y[[1]][Result$var_Y[[1]][s],]) /
+      sqrt(crossprod(Result$load_X[[1]][Result$var_X[[1]][e],], Result$load_X[[1]][Result$var_X[[1]][e],]) * crossprod(Result$load_Y[[1]][Result$var_Y[[1]][s],], Result$load_Y[[1]][Result$var_Y[[1]][s],]))) * cor[3]
+  }
+}
+
+
+Edge <- Edge + t(Edge)
+# Edge[Edge <= 0.5] <- 0
+
+adj_matrix <- Edge[which(colSums(Edge > 0) > 0), which(colSums(Edge > 0) > 0)]
+node_name <- nodes[which(colSums(Edge > 0) > 0)]
+group <- group[which(colSums(Edge > 0) > 0)]
+
+highlight_name <- c((node_name[group == "Protein"])[order(colSums(adj_matrix)[group == "Protein"], decreasing = T)[1:10]],  (node_name[group == "Metabolite"])[order(colSums(adj_matrix)[group == "Metabolite"], decreasing = T)[1:10]], (node_name[group == "Lipid"])[order(colSums(adj_matrix)[group == "Lipid"], decreasing = T)[1:10]])
+
+node_name <- sapply(1:length(node_name), function(l){
+  mark <- sum(sapply(1:length(highlight_name), function(h){
+    node_name[l] == highlight_name[h]
+  }))
+  if(mark == 1){
+    node_name[l]
+  }else{
+    NA
+  }
+})
+
+
+g <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", weighted = T)
+V(g)$group <- group
+layout <- layout_with_fr(g)
+
+# Plot using a force-directed layout
+get_legend <- function(mygg) {
+  gg <- ggplotGrob(mygg)
+  idx <- which(sapply(gg$grobs, function(x) x$name) == "guide-box")
+  gg$grobs[[idx]]
+}
+
+weight_vals <- seq(min(E(g)$weight), max(E(g)$weight), length.out = 5)
+df_leg <- data.frame(x = 1:5,
+                     y = 1:5,
+                     weight = weight_vals)
+
+p_edge_leg <- ggplot(df_leg, aes(x = x, y = y, color = weight)) +
+  geom_point(size = 5, alpha = 0) +
+  scale_color_gradient(
+    low  = "white",
+    high = "#2b8cbe",
+    name = "Corr",
+    guide = guide_colorbar(barheight = unit(3, "cm"),
+                           barwidth  = unit(0.4, "cm"))
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    legend.title    = element_text(size = 12),
+    legend.text     = element_text(size = 10)
+  )
+
+leg_edge <- get_legend(p_edge_leg)
+V(g)$deg <- degree(g)
+
+coords <- layout_with_fr(g,
+                         niter      = 2e3,
+                         area       = vcount(g)^2 * 4,
+                         repulserad = vcount(g)^3 * 1.5)
+
+p_main <- ggraph(g,
+       layout = "manual",
+       x      = coords[,1],
+       y      = coords[,2]
+)  +
+  geom_edge_link(aes(color = weight),
+                 alpha       = 0.5,
+                 show.legend = T) +
+  scale_edge_color_gradient(low = "white", high = "#2b8cbe", guide = FALSE) +
+  # scale_edge_color_gradient(guide = FALSE) +
+  geom_node_point(aes(color = group,
+                      size  = deg),     # ← map size to degree
+                  alpha = 0.9) +
+  scale_size_continuous(range = c(1, 4)) + 
+  scale_color_manual(
+    values = c("#b2182b", "#d95f0e", "#006837"),
+    name   = ""
+  ) +
+  geom_text_repel(
+    aes(x = x, y = y, label = node_name, color = group),
+    show.legend  = FALSE,
+    size         = 2,
+    force        = 5,
+    max.overlaps = 10
+  ) +
+  labs(x = NULL, y = NULL, title = NULL) +
+  theme_void() +
+  guides(size = "none") +
+  theme(
+    legend.position   = "top",   
+    text               = element_text(size = 15),
+    plot.title         = element_text(hjust = 0.5)
+  )
+
+
+
+grid::grid.newpage()
+p <- gridExtra::grid.arrange(
+  p_main,     
+   leg_edge,    
+  ncol   = 2,
+  widths = c(1.5, 0.2)  
+)
+
+ggsave(paste0("Figure/", "association", ".pdf"), p, width = 7, height = 4, dpi = 300)
+```
+
