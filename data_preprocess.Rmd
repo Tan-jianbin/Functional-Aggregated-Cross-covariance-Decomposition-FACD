@@ -1,5 +1,5 @@
 ---
-title: "iPOP Preprocessing of Exercise Cohort Data for CCVA"
+title: "Preprocessing of Exercise Cohort Data for CCVA"
 author: "Pixu Shi"
 date: "`r Sys.Date()`"
 output:
@@ -46,7 +46,7 @@ library(PMCMRplus)
 ## Subject data
 
 ```{r}
-meta_subj <- read.xlsx("data/NIHMS1588589-supplement-9.xlsx", 
+meta_subj <- xlsx::read.xlsx("Data/Source_data/NIHMS1588589-supplement-9.xlsx", 
                    sheetIndex = 1, startRow = 3, endRow = 39)
 rownames(meta_subj) <- meta_subj$Participant.ID
 colnames(meta_subj)[1] <- "subjectID"
@@ -54,11 +54,10 @@ meta_subj <- meta_subj[sort(meta_subj$subjectID),]
 dim(meta_subj)
 ```
 
-
 ## Visit data
 
 ```{r}
-visits <- read.csv("data/iPOP/iPOP_visit_info.csv", header=T, row.names=1)
+visits <- read.csv("Data/Source_data/iPOP_visit_info.csv", header=T, row.names=1)
 visits$visitID <- rownames(visits)
 visits <- visits %>%
   filter(Event=="Exercise")
@@ -98,11 +97,10 @@ plot_tempted_result <- function(res_tempted, dat){
 ```
 
 
-
 ## Metabolomic data
 
 ```{r}
-dat_metab <- read.csv("data/iPOP/Exercise_Metabolomics.csv", header=T, row.names=1)
+dat_metab <- read.csv("Data/Source_data/Exercise_Metabolomics.csv", header=T, row.names=1)
 dim(dat_metab)
 
 meta_metab <- visits[rownames(dat_metab),]
@@ -123,8 +121,6 @@ oo <- apply(dat_metab, 2, mark_outlier)
 log_metab <- log10(dat_metab[,oo>10e-20])
 
 pheatmap(cor(log_metab), labels_row = "", labels_col="")
-
-write.csv(log_metab, file="proc_data/exercise_log10_metabolome.csv")
 ```
 
 
@@ -132,7 +128,7 @@ write.csv(log_metab, file="proc_data/exercise_log10_metabolome.csv")
 ## Lipidomic
 
 ```{r}
-dat_lipid <- read.csv("data/iPOP/Exercise_Lipidomics.csv", header=T, row.names=1)
+dat_lipid <- read.csv("Data/Source_data/Exercise_Lipidomics.csv", header=T, row.names=1)
 dim(dat_lipid)
 
 meta_lipid <- visits[rownames(dat_lipid),]
@@ -210,8 +206,6 @@ log_lipid_pc <- do.call(cbind, log_lipid_pc)
 print(dim(log_lipid_pc))
 
 pheatmap(cor(log_lipid_pc))
-
-write.csv(log_lipid_pc, file="proc_data/exercise_log10_lipidome_pc.csv")
 ```
 
 
@@ -221,7 +215,7 @@ write.csv(log_lipid_pc, file="proc_data/exercise_log10_lipidome_pc.csv")
 ### Check missing values
 
 ```{r}
-dat_cytokine <- read.csv("data/iPOP/Exercise_targ_proteomics.csv", header=T, row.names=1)
+dat_cytokine <- read.csv("Data/Source_data/Exercise_targ_proteomics.csv", header=T, row.names=1)
 dim(dat_cytokine)
 rowSums(is.na(dat_cytokine)) # one sample has too many missing values
 dat_cytokine <- dat_cytokine[rownames(dat_cytokine)!="ZOZOW1T-E12",]
@@ -236,15 +230,13 @@ pheatmap(table(meta_cytokine$SubjectID, meta_cytokine$timepoint), cluster_cols =
 log_cytokine <- log10(dat_cytokine)
 
 pheatmap(cor(log_cytokine))
-
-write.csv(log_cytokine, file="proc_data/exercise_log10_cytokine.csv")
 ```
 
 
 ## Untargeted Proteomic data
 
 ```{r}
-dat_protein <- read.csv("data/iPOP/Exercise_Proteomics.csv", header=T, row.names=1)
+dat_protein <- read.csv("Data/Source_data/Exercise_Proteomics.csv", header=T, row.names=1)
 dim(dat_protein)
 
 meta_protein <- visits[rownames(dat_protein),]
@@ -256,8 +248,6 @@ log_protein <- log10(dat_protein)
 range(log_protein)
 
 pheatmap(cor(log_protein))
-
-write.csv(log_protein, file="proc_data/exercise_log10_protein.csv")
 ```
 
 
@@ -288,6 +278,33 @@ sapply(dat_all, dim)
 sapply(dat_all[2:5], function(x){sum(x==0)})
 sapply(dat_all[3:6], range)
 sapply(dat_all, dim)
-saveRDS(dat_all, file="proc_data/exercise_log10_multiomic.RDS")
+saveRDS(dat_all, file="Data/exercise_log10_multiomic.RDS")
+```
+
+## Pre-processing
+```{r}
+source('Function.R')
+dat_all <- readRDS("Data/exercise_log10_multiomic.RDS") # Original data
+
+# Protein data
+dat <- cbind(dat_all$cytokine, dat_all$protein) # Original data
+dat_count <- dat_all$meta_visit # Label of subjects and times
+time <- 0:4 / 4 # Observational times
+
+Protein <- wrap.dat(dat = dat, dat_count = dat_count, time = time)
+save(Protein, file = "Data/Protein.rda", version = 2)
+
+# metabolite
+dat <- dat_all$metabolome # Original data
+
+Metabolomic <- wrap.dat(dat = dat, dat_count = dat_count, time = time)
+save(Metabolomic, file = "Data/Metabolomic.rda", version = 2)
+
+# Lipid
+dat <- dat_all$lipid # Original data
+
+Lipid <- wrap.dat(dat = dat, dat_count = dat_count, time = time)
+save(Lipid, file = "Data/Lipid.rda", version = 2)
+
 ```
 
