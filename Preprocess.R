@@ -66,7 +66,6 @@ save(Protein, file = "Data/Protein.rda", version = 2)
 dat <- dat_all$metabolome # Original data
 
 Metabolomic <- wrap.dat(dat = dat, dat_count = dat_count, time = time)
-
 save(Metabolomic, file = "Data/Metabolomic.rda", version = 2)
 
 ###############################################################################################
@@ -74,6 +73,5 @@ save(Metabolomic, file = "Data/Metabolomic.rda", version = 2)
 dat <- dat_all$lipid # Original data
 
 Lipid <- wrap.dat(dat = dat, dat_count = dat_count, time = time)
-
 save(Lipid, file = "Data/Lipid.rda", version = 2)
 

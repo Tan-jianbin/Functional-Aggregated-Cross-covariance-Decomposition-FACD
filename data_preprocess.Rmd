@@ -46,7 +46,7 @@ library(PMCMRplus)
 ## Subject data
 
 ```{r}
-meta_subj <- read.xlsx("data/iPOP/NIHMS1588589-supplement-9.xlsx", 
+meta_subj <- read.xlsx("data/NIHMS1588589-supplement-9.xlsx", 
                    sheetIndex = 1, startRow = 3, endRow = 39)
 rownames(meta_subj) <- meta_subj$Participant.ID
 colnames(meta_subj)[1] <- "subjectID"
