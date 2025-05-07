@@ -8,8 +8,7 @@ The repository includes both simulated and real-world datasets used in our study
 
 ### Data Description
 
-The `Data/` directory contains raw data files, including blood samples from 36 participants who underwent a controlled exercise protocol following overnight fasting. Samples were collected at baseline, and at 2, 15, 30, and 60 minutes post-exercise.  
-The original dataset was obtained from [http://hmp2-data.stanford.edu/](http://hmp2-data.stanford.edu/).
+The `Data/` directory contains raw data files, including blood samples from 36 participants who underwent a controlled exercise protocol following overnight fasting. Samples were collected at baseline, and at 2, 15, 30, and 60 minutes post-exercise. The original dataset was obtained from [http://hmp2-data.stanford.edu/](http://hmp2-data.stanford.edu/).
 
 ## 2. Code
 
