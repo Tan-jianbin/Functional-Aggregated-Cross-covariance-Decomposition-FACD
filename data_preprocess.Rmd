@@ -276,7 +276,6 @@ dat_all <- list(meta_subj=meta_subj,
 )
 sapply(dat_all, dim)
 sapply(dat_all[2:5], function(x){sum(x==0)})
-#saveRDS(dat_all, file="proc_data/exercise_multiomic.RDS")
 
 dat_all <- list(meta_subj=meta_subj,
                 meta_visit = visits[sID,],
