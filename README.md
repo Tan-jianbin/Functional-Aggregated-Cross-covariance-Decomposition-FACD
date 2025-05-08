@@ -1,6 +1,6 @@
 # Canonical Cross-Covariance Analysis of High-Dimensional Longitudinal Data
 
-This repository contains the data and code associated with the paper:  **"Associating High-Dimensional Longitudinal Datasets through Canonical Cross-Covariance Analysis"**  by *Jianbin Tan* and *Pixu Shi*.
+This repository contains the data and code associated with the paper:  **"Associating High-Dimensional Longitudinal Datasets through Canonical Cross-Covariance Analysis"**  by Jianbin Tan and Pixu Shi.
 
 ## 1. Data
 
