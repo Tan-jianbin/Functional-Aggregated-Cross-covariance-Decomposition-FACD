@@ -219,7 +219,7 @@ fit_cov_surface <- function(M, time_mark_X, time_mark_Y, time){
     
   }else{
     
-    fit <- gam(z ~ te(x, y, bs = "cr", k = c(num_k, num_k)), data = matrix_sample, weights = w, family = "gaussian", method="GCV.Cp")
+    fit <- gam(z ~ te(x, y, bs = "cr", k = c(num_k, num_k)), data = matrix_sample, weights = matrix_sample$w, family = "gaussian", method="GCV.Cp")
     Cov_fit <- predict(fit, newdata = list(x = x, y = y))
     
   }

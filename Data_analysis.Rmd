@@ -22,8 +22,6 @@ setwd(mydir)
 # Input functions and packages
 
 ```{r}
-source("Function.R")
-source("LCCA_function.R")
 library(network)
 library(sna)
 library(ggplot2)
@@ -31,6 +29,7 @@ library(ggplot2)
 library(ggrepel)
 library(igraph)
 library(ggraph)
+library(CCVA)
 ```
 
 # Data Illustration

@@ -1,11 +1,7 @@
 # Canonical Cross-Covariance Analysis of High-Dimensional Longitudinal Data
 
-> **Now available as an R package** **CCVA** on CRAN and GitHub!  
-> Install from CRAN with:
-> ```r
-> install.packages("CCVA")
-> ```
-> Or install the development version from GitHub:
+> **An R package** **CCVA** on  GitHub is avaliable.
+>  Install the development version from GitHub:
 > ```r
 > remotes::install_github("Tan-jianbin/CCVA")
 > ```
