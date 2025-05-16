@@ -317,7 +317,7 @@ file_name <- c("fit_Protein_Metabolomic.rda", "fit_Protein_Lipid.rda",
 var_name <- cbind(var1 = c("Protein", "Protein", "Metabolite"),
                   var2 = c("Metabolite", "Lipid", "Lipid"))
 
-dat_plot <- data_frame()
+dat_plot <- data.frame()
 cor <- vector()
 for(i in 1:3){
   load(paste0("Result/", file_name[i]))
@@ -359,6 +359,7 @@ ggplot(dat_plot) +
 load("Data/Protein.rda")
 load("Data/Metabolomic.rda")
 load("Data/Lipid.rda")
+source("Function.R")
 time_label <- c('Baseline', "2 min", "15 min", "30 min", "60 min")
 hight_feature <- 10
 
