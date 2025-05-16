@@ -1,5 +1,15 @@
 # Canonical Cross-Covariance Analysis of High-Dimensional Longitudinal Data
 
+> **Now available as an R package** **CCVA** on CRAN and GitHub!  
+> Install from CRAN with:
+> ```r
+> install.packages("CCVA")
+> ```
+> Or install the development version from GitHub:
+> ```r
+> remotes::install_github("Tan-jianbin/CCVA")
+> ```
+
 This repository contains the data and code associated with the paper:  **"Associating High-Dimensional Longitudinal Datasets through Canonical Cross-Covariance Analysis"**  by Jianbin Tan and Pixu Shi.
 
 ## 1. Data
