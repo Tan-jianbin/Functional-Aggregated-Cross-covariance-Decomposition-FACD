@@ -11,15 +11,13 @@ The repository includes both simulated and real-world datasets used in our study
 The `Data/` directory contains raw data files, including blood samples from 36 participants who underwent a controlled exercise protocol following overnight fasting. Samples were collected at baseline, and at 2, 15, 30, and 60 minutes post-exercise. The original dataset was obtained from [http://hmp2-data.stanford.edu/](http://hmp2-data.stanford.edu/).
 
 ## 2. R Package
-### An R package** **CCVA** on  GitHub is avaliable:
+### Package** **CCVA** on  GitHub is avaliable:
 ```r
 install.packages("remotes")    # if not already installed
 remotes::install_github("Tan-jianbin/CCVA")
 ```
 
 ### Example
-
-The full worked example is stored in **example.R** and is included here automatically:
 
 ```r
 #-------------------------------------------------------------
