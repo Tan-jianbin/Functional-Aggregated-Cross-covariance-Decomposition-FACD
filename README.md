@@ -123,6 +123,7 @@ print(res_plot$plot)
 # Important features
 cat("Top Metabolite features:\n", paste(res_plot$feature_X, collapse = ", "), "\n")
 cat("Top Lipid features:\n",      paste(res_plot$feature_Y, collapse = ", "), "\n")
+```
 
 ## 3. Code
 
