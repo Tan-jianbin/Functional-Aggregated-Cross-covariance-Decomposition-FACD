@@ -14,7 +14,7 @@ source("LCCA_function.R")
 ################################################################################
 # Simulation parameters
 rho      <- 0.8      # Correlation
-comp     <- 2        # Number of components
+comp     <- 4        # Number of components
 time_num <- 8        # maximum of time points
 p_ture   <- 10       # Number of important variables
 
@@ -189,7 +189,7 @@ for(i in 1:3){
     )
     
     var_error <- rbind(var_error, 
-                       data.frame(result * 100,
+                       data.frame(result * 300,
                                   Method = rep(c(rep("CCVA", 6), rep("SCCA", 6), rep("FSCCA", 6)), 1),
                                   Label  = rep(c(rep("The first dataset", 3), rep("The second dataset", 3)), 3),
                                   Type   = rep(c("FNR", "FPR", "OER"), 6),
@@ -270,8 +270,8 @@ for(i in 1:3){
     
     loa_error <- rbind(loa_error, 
                        data.frame(Error  = c(t(result)),
-                                  Method = rep(c(rep("CCVA", 100), rep("LCCA", 100), rep("FSCCA", 100), rep("MFPCA", 100)), 2),
-                                  Label  = c(rep("The first dataset", 4 * 100), rep("The second dataset", 4 * 100)),
+                                  Method = rep(c(rep("CCVA", 300), rep("LCCA", 300), rep("FSCCA", 300), rep("MFPCA", 300)), 2),
+                                  Label  = c(rep("The first dataset", 4 * 300), rep("The second dataset", 4 * 300)),
                                   n      = rep(paste0("n=", n), length(c(t(result)))),
                                   p      = rep(r, length(c(t(result))))
                        )
