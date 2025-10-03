@@ -67,7 +67,7 @@ wrap.dat <- function(dat, dat_count, time_label){
 # Data generation
 data_gen <- function(n, rho, time_num, p_X, p_Y, comp, p_ture){
   
-  var_comp <- sapply(1:comp, function(k) exp(-k))
+  var_comp <- sapply(1:comp, function(k) 0.5 * k ^ (-2))
   mat <- lapply(1:comp, function(k){
     matrix(c(1, rho / k ^ 2, rho / k ^ 2, 1), 2, 2)
   })
@@ -799,14 +799,17 @@ SLCCA_tr <- function(group_x, group_y, print_tuning = F, length_tun = 30, max_va
   
   fit_opt_1 <- cv_slcca(lambda = lambda_1, Initial_cca, n, group_x, group_y, max_var)
   fit_opt_2 <- cv_slcca(lambda = lambda_2, Initial_cca, n, group_x, group_y, max_var)
+  
   if(sum(sapply(unique(group_x), function(j) sum(fit_opt_1$fit_cca$X_coef[group_x == j] ^ 2)) != 0) + 
      sum(sapply(unique(group_y), function(j) sum(fit_opt_1$fit_cca$Y_coef[group_y == j] ^ 2)) != 0) <=
      sum(sapply(unique(group_x), function(j) sum(fit_opt_2$fit_cca$X_coef[group_x == j] ^ 2)) != 0) + 
      sum(sapply(unique(group_y), function(j) sum(fit_opt_2$fit_cca$Y_coef[group_y == j] ^ 2)) != 0)
   ){
     fit_opt <- fit_opt_1
+    print(c(lambda_1))
   }else{
     fit_opt <- fit_opt_2
+    print(c(lambda_2))
   }
   cor <- fit_opt$error
   
@@ -829,6 +832,7 @@ CCVA <- function(grid_num = 201, dat_X, dat_Y, mean_zero = F, print_tuning = T, 
   
   Optimal_basis <- Optimal_basis_est(dat_X, dat_Y, grid_num, max_comp_num = 5, mean_zero, FVE)
   
+  print(c(Optimal_basis$Optimal_bais$X$comp_num, Optimal_basis$Optimal_bais$Y$comp_num))
   group_x <- rep(1:p_X, each = Optimal_basis$Optimal_bais$X$comp_num)
   group_y <- rep(1:p_Y, each = Optimal_basis$Optimal_bais$Y$comp_num)
   

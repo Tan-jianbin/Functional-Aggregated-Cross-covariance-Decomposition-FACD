@@ -55,12 +55,12 @@ error_CCVA <- sapply(1:cv_num, function(k){
   dat_Y_train$sub_label <- dat_Y_train$sub_label[sam_mark]
   
   Result_CCVA_train <- CCVA(grid_num = grid_num, 
-                              dat_X, dat_Y,
-                              max_var = max_var, # Maximum number of selected features
-                              length_tun = 30, # Number of evaluated tuning parameters for two datasets
-                              print_tuning = F,
-                              comp = 1,
-                              FVE = 0.95 # Fraction of variance explained
+                            dat_X, dat_Y,
+                            max_var = max_var, # Maximum number of selected features
+                            length_tun = 30, # Number of evaluated tuning parameters for two datasets
+                            print_tuning = F,
+                            comp = 1,
+                            FVE = 0.95 # Fraction of variance explained
   )
   
   load_X <- Result_CCVA_train$load_X[[1]]

@@ -22,6 +22,8 @@ setwd(mydir)
 # Input functions and packages
 
 ```{r}
+source("Function.R")
+source("LCCA_function.R")
 library(network)
 library(sna)
 library(ggplot2)
@@ -29,7 +31,6 @@ library(ggplot2)
 library(ggrepel)
 library(igraph)
 library(ggraph)
-library(CCVA)
 ```
 
 # Data Illustration
@@ -211,6 +212,7 @@ ggsave(paste0("Figure/", "data_illu", ".pdf"), p, width = 9, height = 10, dpi = 
 ```
 
 
+
 # Protein vs Metabolite
 ```{r}
 load("Data/Protein.rda")
@@ -317,7 +319,7 @@ file_name <- c("fit_Protein_Metabolomic.rda", "fit_Protein_Lipid.rda",
 var_name <- cbind(var1 = c("Protein", "Protein", "Metabolite"),
                   var2 = c("Metabolite", "Lipid", "Lipid"))
 
-dat_plot <- data.frame()
+dat_plot <- data_frame()
 cor <- vector()
 for(i in 1:3){
   load(paste0("Result/", file_name[i]))
@@ -359,7 +361,6 @@ ggplot(dat_plot) +
 load("Data/Protein.rda")
 load("Data/Metabolomic.rda")
 load("Data/Lipid.rda")
-source("Function.R")
 time_label <- c('Baseline', "2 min", "15 min", "30 min", "60 min")
 hight_feature <- 10
 
@@ -429,7 +430,6 @@ group <- sapply(1:length(nodes), function(l) dat_name[which(c(sum(Protein$featur
 
 ## Edge matrix
 Edge <- matrix(0, length(nodes), length(nodes))
-# Edge_boot <- array(0, c(length(nodes), length(nodes), 1001))
 
 load(paste0("Result/", file_name[1]))
 mark_X <- p1$feature_X
@@ -466,7 +466,6 @@ for(e in 1:length(mark_X)){
 
 
 Edge <- Edge + t(Edge)
-# Edge[Edge <= 0.5] <- 0
 
 adj_matrix <- Edge[which(colSums(Edge > 0) > 0), which(colSums(Edge > 0) > 0)]
 node_name <- nodes[which(colSums(Edge > 0) > 0)]
@@ -484,7 +483,6 @@ node_name <- sapply(1:length(node_name), function(l){
     NA
   }
 })
-
 
 g <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", weighted = T)
 V(g)$group <- group
