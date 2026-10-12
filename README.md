@@ -1,6 +1,6 @@
 # Associating High-Dimensional Longitudinal Datasets through an Efficient Cross-Covariance Decomposition
 
-This repository contains the data and code associated with the paper **"Associating High-Dimensional Longitudinal Datasets through an Efficient Cross-Covariance Decomposition"** by *Jianbin Tan* and *Pixu Shi*, available on [arXiv](https://arxiv.org/abs/2601.13405).
+This repository contains the data and code associated with the paper **"Associating High-Dimensional Longitudinal Datasets through an Efficient Cross-Covariance Decomposition"** by *Jianbin Tan* and *Pixu Shi*, available on [arXiv](https://arxiv.org/abs/2601.13405). The proposed method is also implemented in the R package **FACD**, available on [GitHub](https://github.com/Tan-jianbin/FACD).
 
 The code studies associations between two high-dimensional longitudinal datasets through cross-covariance decomposition, functional loadings, and feature selection. In addition to the main simulations and exercise-cohort analysis, the repository includes convergence and initialization diagnostics and a time-point subsampling sensitivity analysis.
 
