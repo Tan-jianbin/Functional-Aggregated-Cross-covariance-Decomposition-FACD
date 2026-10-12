@@ -232,7 +232,7 @@ grid_num <- 201 # Number of evaluated time points for functions
 time_grid <- seq(0, 1, length.out = grid_num)
 max_var <- floor(c(min(p_X / 2, n), min(p_Y / 2, n)))
 
-Result <- CCVA(grid_num = grid_num,      # Number of evaluated time points for functional objects
+Result <- FACD(grid_num = grid_num,      # Number of evaluated time points for functional objects
                dat_X, dat_Y,             # Two high-dimensional longitudinal datasets
                max_var = max_var,        # Maximum number of selected features
                length_tun = 30,          # Number of evaluated tuning parameters for two datasets
@@ -264,7 +264,7 @@ grid_num <- 201 # Number of evaluated time points for functions
 time_grid <- seq(0, 1, length.out = grid_num)
 max_var <- floor(c(min(p_X / 2, n), min(p_Y / 2, n)))
 
-Result <- CCVA(grid_num = grid_num, 
+Result <- FACD(grid_num = grid_num, 
                       dat_X, dat_Y,
                       max_var = max_var, # Maximum number of selected features
                       length_tun = 30, # Number of evaluated tuning parameters for two datasets
@@ -297,7 +297,7 @@ grid_num <- 201 # Number of evaluated time points for functions
 time_grid <- seq(0, 1, length.out = grid_num)
 max_var <- floor(c(min(p_X / 2, n), min(p_Y / 2, n)))
 
-Result <- CCVA(grid_num = grid_num, 
+Result <- FACD(grid_num = grid_num, 
                       dat_X, dat_Y,
                       max_var = max_var, # Maximum number of selected features
                       length_tun = 30, # Number of evaluated tuning parameters for two datasets
@@ -366,7 +366,7 @@ hight_feature <- 10
 
 # Protein vs Metabolite
 load(paste0("Result/", file_name[1]))
-p1 <- plot_CCVA(Result, Protein, Metabolomic, 
+p1 <- plot_FACD(Result, Protein, Metabolomic, 
                  hight_feature, # The number of important features you want to highlight
                  k = 1, " Protein", "Metabolite", (0:4)/4, time_label, "(A)")
 
@@ -382,7 +382,7 @@ write.csv(feature_df, "Result/Protein_Metabolite_features_output.csv", row.names
 
 # Protein vs Lipid
 load(paste0("Result/", file_name[2]))
-p2 <- plot_CCVA(Result, Protein, Lipid, 
+p2 <- plot_FACD(Result, Protein, Lipid, 
                  hight_feature, # The number of important features you want to highlight
                  k = 1, " Protein", "Lipid", (0:4)/4, time_label, "(B)")
 
@@ -398,7 +398,7 @@ write.csv(feature_df, "Result/Protein_Lipid_features_output.csv", row.names = FA
 
 # Metabolite vs Lipid
 load(paste0("Result/", file_name[3]))
-p3 <- plot_CCVA(Result, Metabolomic, Lipid, 
+p3 <- plot_FACD(Result, Metabolomic, Lipid, 
                  hight_feature, # The number of important features you want to highlight
                  k = 1, " Metabolite", "Lipid", 0:4/ 4, time_label, "(C)")
 
@@ -430,6 +430,7 @@ group <- sapply(1:length(nodes), function(l) dat_name[which(c(sum(Protein$featur
 
 ## Edge matrix
 Edge <- matrix(0, length(nodes), length(nodes))
+# Edge_boot <- array(0, c(length(nodes), length(nodes), 1001))
 
 load(paste0("Result/", file_name[1]))
 mark_X <- p1$feature_X
@@ -466,6 +467,7 @@ for(e in 1:length(mark_X)){
 
 
 Edge <- Edge + t(Edge)
+# Edge[Edge <= 0.5] <- 0
 
 adj_matrix <- Edge[which(colSums(Edge > 0) > 0), which(colSums(Edge > 0) > 0)]
 node_name <- nodes[which(colSums(Edge > 0) > 0)]
@@ -483,6 +485,7 @@ node_name <- sapply(1:length(node_name), function(l){
     NA
   }
 })
+
 
 g <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", weighted = T)
 V(g)$group <- group

@@ -4,7 +4,6 @@ library(TruncatedNormal)
 library(mvtnorm)
 library(fields)
 library(filling)
-# library(knitr)
 library(ggplot2)
 library(mgcv)
 library(sparsegl)
@@ -76,34 +75,33 @@ data_gen <- function(n, rho, time_num, p_X, p_Y, comp, p_ture){
   }) 
   
   alpha_X <- sapply(1:comp, function(k){
-    A <- sapply(1:3, function(g) c(runif(p_ture, 1, 2 * (5 - g)) * sample(c(1,-1), p_ture, replace = T), rep(0, p_X - p_ture)))
+    A <- sapply(1:10, function(g) c(runif(p_ture, exp((11 - g)), exp(1.5 * (11 - g))) * sample(c(1,-1), p_ture, replace = T), rep(0, p_X - p_ture)))
     A <- A / sqrt(sum(A ^ 2))
     return(A)
   })
   alpha_X <- qr.Q(qr(alpha_X))
-  alpha_X <- lapply(1:comp, function(k) matrix(alpha_X[,k], ncol = 3))
+  alpha_X <- lapply(1:comp, function(k) matrix(alpha_X[,k], ncol = 10))
   
   alpha_Y <- sapply(1:comp, function(k){
-    A <- sapply(1:3, function(g) c(runif(p_ture, 1, 2 * (5 - g)) * sample(c(1,-1), p_ture, replace = T), rep(0, p_X - p_ture)))
+    A <- sapply(1:10, function(g) c(runif(p_ture, exp((11 - g)), exp(1.5 * (11 - g))) * sample(c(1,-1), p_ture, replace = T), rep(0, p_X - p_ture)))
     A <- A / sqrt(sum(A ^ 2))
     return(A)
   })
   alpha_Y <- qr.Q(qr(alpha_Y))
-  alpha_Y <- lapply(1:comp, function(k) matrix(alpha_Y[,k], ncol = 3))
+  alpha_Y <- lapply(1:comp, function(k) matrix(alpha_Y[,k], ncol = 10))
   
   # The first dataset
   time_tol <- seq(0, 1, length.out = 201)
   L <- lapply(1:n, function(i){
     time <- sample((time_num - 3):(time_num), 1)
     time_point <- sort(sample(time_tol, time, replace = F))
-    basis <- fourier(time_point, nbasis =  4, period = 1)[,c(2, 3, 4)]
-    Ly <- t(sapply(1:p_X, function(j)  rowSums(sapply(1:comp, function(k) val[[k]][1,i] * basis %*% alpha_X[[k]][j,]))
-    ))
+    basis <- fourier(time_point, nbasis =  20, period = 1)[,2:11]
+    Ly <- t(sapply(1:p_X, function(j)  rowSums(sapply(1:comp, function(k) val[[k]][1,i] * basis %*% alpha_X[[k]][j,]))))
     return(list(Lt = time_point, Ly = Ly))
   })
   
   load_X <- lapply(1:comp, function(k){
-    t(sapply(1:p_X, function(j) fourier(seq(0, 1, 1 / (201 - 1)), nbasis = 4, period = 1)[,c(2, 3, 4)] %*% alpha_X[[k]][j,]))
+    t(sapply(1:p_X, function(j) fourier(seq(0, 1, 1 / (201 - 1)), nbasis = 20, period = 1)[,c(2:11)] %*% alpha_X[[k]][j,]))
   })
   load_X <- lapply(1:comp, function(k){
     load_X[[k]] / sqrt(sum(rowMeans(load_X[[k]] ^ 2)))
@@ -132,14 +130,13 @@ data_gen <- function(n, rho, time_num, p_X, p_Y, comp, p_ture){
   L <- lapply(1:n, function(i){
     time <- sample((time_num - 3):(time_num), 1)
     time_point <- sort(sample(time_tol, time, replace = F))
-    # time_point <- sort(sample(seq(0, 1, length.out = 20), time, replace = F))
-    basis <- fourier(time_point, nbasis =  10, period = 1)[,c(2,3,4)]
+    basis <- fourier(time_point, nbasis = 20, period = 1)[,c(2:11)]
     Ly <- t(sapply(1:p_Y, function(j)  rowSums(sapply(1:comp, function(k) val[[k]][2,i] * basis %*% alpha_Y[[k]][j,]))))
     return(list(Lt = time_point, Ly = Ly))
   })
   
   load_Y <- lapply(1:comp, function(k){
-    t(sapply(1:p_Y, function(j) fourier(seq(0, 1, 1 / (201 - 1)), nbasis = 10, period = 1)[,c(2,3,4)] %*% alpha_Y[[k]][j,]))
+    t(sapply(1:p_Y, function(j) fourier(seq(0, 1, 1 / (201 - 1)), nbasis = 20, period = 1)[,c(2:11)] %*% alpha_Y[[k]][j,]))
   })
   load_Y <- lapply(1:comp, function(k){
     load_Y[[k]] / sqrt(sum(rowMeans(load_Y[[k]] ^ 2)))
@@ -230,7 +227,7 @@ fit_cov_surface <- function(M, time_mark_X, time_mark_Y, time){
 fit_basis <- function(M, time_mark, time){
   
   fit_cov <- fit_cov_surface(M, time_mark, time_mark, time)
-  fit <- eigen(fit_cov, symmetric = T)
+  fit <- base::eigen(fit_cov, symmetric = T)
   eigenfunction <- fit$vectors[,1] * sqrt(nrow(fit_cov))
   
   return(
@@ -253,7 +250,7 @@ FSVD_r <- function(M, time, time_mark, R_max, FVE){
   op_basis$workGrid <- time
   op_basis$eigenvalue <- fit$eigendocomposition$values[1:R_max] / length(time)
   
-  op_basis$comp_num <- max(sum(cumsum(op_basis$eigenvalue) / tol_norm <= FVE)  + 1, 2)
+  op_basis$comp_num <- min(max(sum(cumsum(op_basis$eigenvalue) / tol_norm <= FVE) + 1, 2), R_max)
   
   return(op_basis)
 }
@@ -403,7 +400,7 @@ Optimal_basis_est <- function(dat_X, dat_Y, grid_num, max_comp_num = 5, mean_zer
 }
 
 
-cca_AX <- function(lambda, abs, Initial_cca, n, group_x, group_y){
+cca_AX <- function(lambda, tol, Initial_cca, n, group_x, group_y){
   
   a_X <- Initial_cca$X_coef
   a_Y <- Initial_cca$Y_coef
@@ -414,7 +411,7 @@ cca_AX <- function(lambda, abs, Initial_cca, n, group_x, group_y){
   num_X <- length(unique(group_x))
   num_Y <- length(unique(group_y))
   
-  while((error > abs) & (ite < 200)){
+  while((error > tol) & (ite < 200)){
     ite <- ite + 1
     
     a_X_t <- a_X
@@ -475,7 +472,7 @@ cv_cca <- function(lambda, Initial_cca, n, zx, zy, group_x, group_y, max_var, cv
     floor(seq(k, n, cv_num))
   })
   
-  fit_cca <- cca_AX(lambda, abs = 0.001, Initial_cca, n, group_x, group_y)
+  fit_cca <- cca_AX(lambda, tol = 0.001, Initial_cca, n, group_x, group_y)
   num_X <- length(which(sapply(unique(group_x), function(j) sum(fit_cca$X_coef[group_x == j] ^ 2)) != 0))
   num_Y <- length(which(sapply(unique(group_y), function(j) sum(fit_cca$Y_coef[group_x == j] ^ 2)) != 0))
   
@@ -485,7 +482,7 @@ cv_cca <- function(lambda, Initial_cca, n, zx, zy, group_x, group_y, max_var, cv
     error <- 0
   }else{
     error <- mean(sapply(1:cv_num, function(k){
-      cca_cv_fit <- cca_AX(lambda, abs = 0.001, 
+      cca_cv_fit <- cca_AX(lambda, tol = 0.001, 
                            Initial_cca = list(X_coef = fit_cca$X_coef, Y_coef = fit_cca$Y_coef, 
                                               Cov = t(zx[-cv_mark[[k]],]) %*% zy[-cv_mark[[k]],] / (n - length(cv_mark[[k]])),
                                               var_X = rep(1, length(fit_cca$X_coef)), var_Y = rep(1, length(fit_cca$Y_coef))),
@@ -517,7 +514,7 @@ cv_cca <- function(lambda, Initial_cca, n, zx, zy, group_x, group_y, max_var, cv
 
 cv_slcca <- function(lambda, Initial_cca, n, group_x, group_y, max_var){
   
-  fit_cca <- cca_AX(lambda, abs = 0.001, Initial_cca, n, group_x, group_y)
+  fit_cca <- cca_AX(lambda, tol = 0.001, Initial_cca, n, group_x, group_y)
   num_X <- length(which(sapply(unique(group_x), function(j) sum(fit_cca$X_coef[group_x == j] ^ 2)) != 0))
   num_Y <- length(which(sapply(unique(group_y), function(j) sum(fit_cca$Y_coef[group_y == j] ^ 2)) != 0))
   
@@ -527,7 +524,7 @@ cv_slcca <- function(lambda, Initial_cca, n, group_x, group_y, max_var){
     error <- - 10 ^ 10
   }else{
     error <- mean(sapply(1:Initial_cca$cv_num, function(k){
-      cca_cv_fit <- cca_AX(lambda, abs = 0.001, 
+      cca_cv_fit <- cca_AX(lambda, tol = 0.001, 
                            Initial_cca = list(X_coef = fit_cca$X_coef, Y_coef = fit_cca$Y_coef, 
                                               Cov = Initial_cca$CV[[k]]$train), n, 
                            group_x, group_y)
@@ -680,15 +677,15 @@ SLCCA_tr <- function(group_x, group_y, print_tuning = F, length_tun = 30, max_va
   vec <- c(Initial_cca$Cov %*% Initial_cca$Y_coef) 
   max_t <- max(sapply(unique(group_x), function(j) sqrt(sum(vec[which(group_x == j)] ^ 2)))) 
   
-  fit <- cca_AX(lambda = c(max_t, max_t), abs = 0.001, Initial_cca, n, group_x, group_y)
+  fit <- cca_AX(lambda = c(max_t, max_t), tol = 0.001, Initial_cca, n, group_x, group_y)
   var_num_X <- length(which(sapply(unique(group_x), function(j) sum(fit$X_coef[group_x == j] ^ 2)) != 0))
   var_num_Y <- length(which(sapply(unique(group_y), function(j) sum(fit$Y_coef[group_y == j] ^ 2)) != 0))
   
   while(var_num_X + var_num_Y != 0){
     max_t <- max_t * 5
-    fit <- cca_AX(lambda = c(max_t, max_t), abs = 0.001, Initial_cca, n, group_x, group_y)
-    var_num_X <- length(which(sapply(unique(group_x), function(j) sum(fit$fit_cca$X_coef[group_x == j] ^ 2)) != 0))
-    var_num_Y <- length(which(sapply(unique(group_y), function(j) sum(fit$fit_cca$Y_coef[group_y == j] ^ 2)) != 0))
+    fit <- cca_AX(lambda = c(max_t, max_t), tol = 0.001, Initial_cca, n, group_x, group_y)
+    var_num_X <- length(which(sapply(unique(group_x), function(j) sum(fit$X_coef[group_x == j] ^ 2)) != 0))
+    var_num_Y <- length(which(sapply(unique(group_y), function(j) sum(fit$Y_coef[group_y == j] ^ 2)) != 0))
   }
   
   lambda_list <- c(max_t / 2, max_t / 10, max_t / 100, max_t / 1000, max_t / 10000)
@@ -697,7 +694,7 @@ SLCCA_tr <- function(group_x, group_y, print_tuning = F, length_tun = 30, max_va
   
   for(a in 1:length(lambda_list)){
     for(b in 1:length(lambda_list)){
-      fit <- cca_AX(lambda = c(lambda_list[a], lambda_list[b]), abs = 0.001, Initial_cca, n, group_x, group_y)
+      fit <- cca_AX(lambda = c(lambda_list[a], lambda_list[b]), tol = 0.001, Initial_cca, n, group_x, group_y)
       var_num_X[b,a] <- length(which(sapply(unique(group_x), function(j) sum(fit$X_coef[group_x == j] ^ 2)) != 0))
       var_num_Y[b,a] <- length(which(sapply(unique(group_y), function(j) sum(fit$Y_coef[group_y == j] ^ 2)) != 0))
     }
@@ -706,10 +703,10 @@ SLCCA_tr <- function(group_x, group_y, print_tuning = F, length_tun = 30, max_va
   A <- var_num_X >= max_var[1]
   if(length(which(colMeans(A) > 0)) == 0){
     min_X <- max_t / 100000
-    fit <- cca_AX(lambda = c(min_X, max_t), abs = 0.001, Initial_cca, n, group_x, group_y)
+    fit <- cca_AX(lambda = c(min_X, max_t), tol = 0.001, Initial_cca, n, group_x, group_y)
     while(length(which(sapply(unique(group_x), function(j) sum(fit$X_coef[group_x == j] ^ 2)) != 0)) <= max_var[1]){
       min_X <- min_X / 10
-      fit <- cca_AX(lambda = c(min_X, max_t), abs = 0.001, Initial_cca, n, group_x, group_y)
+      fit <- cca_AX(lambda = c(min_X, max_t), tol = 0.001, Initial_cca, n, group_x, group_y)
     }
   }else{
     min_X <- lambda_list[min(which(colMeans(A) > 0))]
@@ -718,10 +715,10 @@ SLCCA_tr <- function(group_x, group_y, print_tuning = F, length_tun = 30, max_va
   A <- var_num_Y >= max_var[2]
   if(length(which(rowMeans(A) > 0)) == 0){
     min_Y <- max_t / 100000
-    fit <- cca_AX(lambda = c(min_X, min_Y), abs = 0.001, Initial_cca, n, group_x, group_y)
+    fit <- cca_AX(lambda = c(min_X, min_Y), tol = 0.001, Initial_cca, n, group_x, group_y)
     while(length(which(sapply(unique(group_y), function(j) sum(fit$Y_coef[group_y == j] ^ 2)) != 0)) <= max_var[2]){
       min_Y <- min_Y / 10
-      fit <- cca_AX(lambda = c(min_X, min_Y), abs = 0.001, Initial_cca, n, group_x, group_y)
+      fit <- cca_AX(lambda = c(min_X, min_Y), tol = 0.001, Initial_cca, n, group_x, group_y)
     }
   }else{
     min_Y <- lambda_list[min(which(rowMeans(A) > 0))]
@@ -806,10 +803,8 @@ SLCCA_tr <- function(group_x, group_y, print_tuning = F, length_tun = 30, max_va
      sum(sapply(unique(group_y), function(j) sum(fit_opt_2$fit_cca$Y_coef[group_y == j] ^ 2)) != 0)
   ){
     fit_opt <- fit_opt_1
-    print(c(lambda_1))
   }else{
     fit_opt <- fit_opt_2
-    print(c(lambda_2))
   }
   cor <- fit_opt$error
   
@@ -821,8 +816,8 @@ SLCCA_tr <- function(group_x, group_y, print_tuning = F, length_tun = 30, max_va
   ))
 }
 
-CCVA <- function(grid_num = 201, dat_X, dat_Y, mean_zero = F, print_tuning = T, length_tun = 30, 
-                 max_var = c(min(n, p_X), min(n, p_Y)), Sparse = T, comp, FVE = 0.95){
+FACD <- function(grid_num = 201, dat_X, dat_Y, mean_zero = F, print_tuning = T, length_tun = 30, 
+                 max_var = c(min(n, p_X), min(n, p_Y)), Sparse = T, comp, FVE = 0.95, max_comp_num = 5){
   
   ## First-step estimation
   time_grid <- seq(0, 1, length.out = grid_num)
@@ -830,9 +825,8 @@ CCVA <- function(grid_num = 201, dat_X, dat_Y, mean_zero = F, print_tuning = T, 
   p_X <- dat_X$p
   p_Y <- dat_Y$p
   
-  Optimal_basis <- Optimal_basis_est(dat_X, dat_Y, grid_num, max_comp_num = 5, mean_zero, FVE)
+  Optimal_basis <- Optimal_basis_est(dat_X, dat_Y, grid_num, max_comp_num = max_comp_num, mean_zero, FVE)
   
-  print(c(Optimal_basis$Optimal_bais$X$comp_num, Optimal_basis$Optimal_bais$Y$comp_num))
   group_x <- rep(1:p_X, each = Optimal_basis$Optimal_bais$X$comp_num)
   group_y <- rep(1:p_Y, each = Optimal_basis$Optimal_bais$Y$comp_num)
   
@@ -895,30 +889,87 @@ CCVA <- function(grid_num = 201, dat_X, dat_Y, mean_zero = F, print_tuning = T, 
     
     if(comp > 1){
       for(r in 2:comp){
-        fit_matrix <- fit_cca$cov[r-1] * tcrossprod(fit_cca$X_coef[,r-1], fit_cca$Y_coef[,r-1])
-        Cov <- Cov - fit_matrix
-        fit <- svd(Cov)
-        Initial_cca <- list(max_sin = fit$d[1], X_coef = fit$u[,1], Y_coef = fit$v[,1],
-                            Cov = Cov,
-                            CV = lapply(1:cv_num, function(k){
-                              list(train = Initial_cca$CV[[k]]$train - fit_matrix,
-                                   test = Initial_cca$CV[[k]]$test - fit_matrix)
-                            }), cv_num = cv_num
-        )
-        gc()
         
-        fit <- SLCCA_tr(group_x = group_x, group_y = group_y, print_tuning, length_tun, max_var, Initial_cca, n, p_X, p_Y)
+        u_previous <- fit_cca$X_coef[, r - 1]
+        v_previous <- fit_cca$Y_coef[, r - 1]
+        
+        eta_previous <- drop(
+          crossprod(
+            u_previous,
+            Cov %*% v_previous
+          )
+        )
+        
+        fit_matrix <- eta_previous *
+          tcrossprod(u_previous, v_previous)
+        
+        Cov <- Cov - fit_matrix
+        
+        CV_previous <- Initial_cca$CV
+        
+        CV_residual <- lapply(seq_len(cv_num), function(k){
+          
+          eta_train <- drop(
+            crossprod(
+              u_previous,
+              CV_previous[[k]]$train %*% v_previous
+            )
+          )
+          
+          eta_test <- drop(
+            crossprod(
+              u_previous,
+              CV_previous[[k]]$test %*% v_previous
+            )
+          )
+          
+          list(
+            train = CV_previous[[k]]$train -
+              eta_train * tcrossprod(u_previous, v_previous),
+            
+            test = CV_previous[[k]]$test -
+              eta_test * tcrossprod(u_previous, v_previous)
+          )
+        })
+        
+        svd_fit <- svd(Cov)
+        
+        Initial_cca <- list(
+          max_sin = svd_fit$d[1],
+          X_coef = svd_fit$u[, 1],
+          Y_coef = svd_fit$v[, 1],
+          Cov = Cov,
+          CV = CV_residual,
+          cv_num = cv_num
+        )
+        
+        fit <- SLCCA_tr(
+          group_x = group_x,
+          group_y = group_y,
+          print_tuning,
+          length_tun,
+          max_var,
+          Initial_cca,
+          n,
+          p_X,
+          p_Y
+        )
+        
         gc()
         
         var_X[[r]] <- fit$var_X
         var_Y[[r]] <- fit$var_Y
         
-        fit_cca$X_coef[,r] <- fit$fit_opt$fit_cca$X_coef
+        fit_cca$X_coef[, r] <- fit$fit_opt$fit_cca$X_coef
         
-        fit_cca$Y_coef[,r] <- fit$fit_opt$fit_cca$Y_coef
+        fit_cca$Y_coef[, r] <- fit$fit_opt$fit_cca$Y_coef
         
-        fit_cca$cov[r] <- t(fit_cca$X_coef[,r]) %*% Cov %*% fit_cca$Y_coef[,r]
-        
+        fit_cca$cov[r] <- drop(
+          crossprod(
+            fit_cca$X_coef[, r],
+            Cov %*% fit_cca$Y_coef[, r]
+          )
+        )
       }
     }
     rm(Initial_cca)
@@ -936,21 +987,84 @@ CCVA <- function(grid_num = 201, dat_X, dat_Y, mean_zero = F, print_tuning = T, 
     matrix(fit_cca$Y_coef[,k], p_Y, byrow = T) %*% t(Optimal_basis$Optimal_bais$Y$phi[,1:Optimal_basis$Optimal_bais$Y$comp_num])
   })
   
-  Z_X <- lapply(1:comp, function(k){
-    sapply(1:n, function(i){
-      sum(sapply(1:p_X, function(j){
-        mean((dat_X$dat[[j]][[i]]$val - Optimal_basis$Mean$X[[j]]$mu[Optimal_basis$Time_mark$X[[i]]]) * load_X[[k]][j,Optimal_basis$Time_mark$X[[i]]])
-      }))
-    })
-  })
+  if(comp > 1){
+    for(r in 2:comp){
+      for(s in 1:(r - 1)){
+        load_X[[r]] <- load_X[[r]] -
+          sum(load_X[[r]] * load_X[[s]]) /
+          sum(load_X[[s]]^2) * load_X[[s]]
+
+        load_Y[[r]] <- load_Y[[r]] -
+          sum(load_Y[[r]] * load_Y[[s]]) /
+          sum(load_Y[[s]]^2) * load_Y[[s]]
+      }
+
+      load_X[[r]] <- load_X[[r]] / sqrt(sum(rowMeans(load_X[[r]]^2)))
+      load_Y[[r]] <- load_Y[[r]] / sqrt(sum(rowMeans(load_Y[[r]]^2)))
+    }
+  }
   
-  Z_Y <- lapply(1:comp, function(k){
-    sapply(1:n, function(i){
-      sum(sapply(1:p_Y, function(j){
-        mean((dat_Y$dat[[j]][[i]]$val - Optimal_basis$Mean$Y[[j]]$mu[Optimal_basis$Time_mark$Y[[i]]]) * load_Y[[k]][j,Optimal_basis$Time_mark$Y[[i]]])
-      }))
+  # Z_X <- lapply(1:comp, function(k){
+  #   sapply(1:n, function(i){
+  #     sum(sapply(1:p_X, function(j){
+  #       mean((dat_X$dat[[j]][[i]]$val - Optimal_basis$Mean$X[[j]]$mu[Optimal_basis$Time_mark$X[[i]]]) * load_X[[k]][j,Optimal_basis$Time_mark$X[[i]]])
+  #     }))
+  #   })
+  # })
+  # 
+  # Z_Y <- lapply(1:comp, function(k){
+  #   sapply(1:n, function(i){
+  #     sum(sapply(1:p_Y, function(j){
+  #       mean((dat_Y$dat[[j]][[i]]$val - Optimal_basis$Mean$Y[[j]]$mu[Optimal_basis$Time_mark$Y[[i]]]) * load_Y[[k]][j,Optimal_basis$Time_mark$Y[[i]]])
+  #     }))
+  #   })
+  # })
+  
+  Z_X <- vector("list", comp)
+  
+  for(k in 1:comp){
+    Z_X[[k]] <- sapply(1:n, function(i){
+      time_i <- Optimal_basis$Time_mark$X[[i]]
+      score <- 0
+      
+      for(j in 1:p_X){
+        residual <- dat_X$dat[[j]][[i]]$val - Optimal_basis$Mean$X[[j]]$mu[time_i]
+        
+        if(k > 1){
+          for(r in 1:(k - 1)){
+            residual <- residual - Z_X[[r]][i] * load_X[[r]][j, time_i]
+          }
+        }
+        
+        score <- score + mean(residual * load_X[[k]][j, time_i])
+      }
+      
+      score
     })
-  })
+  }
+  
+  Z_Y <- vector("list", comp)
+  
+  for(k in 1:comp){
+    Z_Y[[k]] <- sapply(1:n, function(i){
+      time_i <- Optimal_basis$Time_mark$Y[[i]]
+      score <- 0
+      
+      for(j in 1:p_Y){
+        residual <- dat_Y$dat[[j]][[i]]$val - Optimal_basis$Mean$Y[[j]]$mu[time_i]
+        
+        if(k > 1){
+          for(r in 1:(k - 1)){
+            residual <- residual - Z_Y[[r]][i] * load_Y[[r]][j, time_i]
+          }
+        }
+        
+        score <- score + mean(residual * load_Y[[k]][j, time_i])
+      }
+      
+      score
+    })
+  }
   
   return(list(Mean = Optimal_basis$Mean,
               Time_mark = Optimal_basis$Time_mark,
@@ -966,7 +1080,7 @@ CCVA <- function(grid_num = 201, dat_X, dat_Y, mean_zero = F, print_tuning = T, 
   ))
 }
 
-plot_CCVA <- function(fit, dat_X, dat_Y, hight_feature = 5, k, name_X, name_Y, time_illu, time_label, title_name){
+plot_FACD <- function(fit, dat_X, dat_Y, hight_feature = 5, k, name_X, name_Y, time_illu, time_label, title_name){
   
   ## Longitudinal canonical vector
   Canonical_X <- fit$load_X[[k]]
@@ -1148,8 +1262,8 @@ simu_func <- function(n, rho, time_num, p_X, p_Y, comp, p_ture, seed){
       rm(x, y)
       gc()
       
-      # CCVA
-      Result_SLCCA <- CCVA(grid_num = 201, dat_X, dat_Y, mean_zero = F, print_tuning = F, length_tun = 30, 
+      # FACD
+      Result_SLCCA <- FACD(grid_num = 201, dat_X, dat_Y, mean_zero = F, print_tuning = F, length_tun = 30, 
                            max_var = c(2 * p_ture, 2 * p_ture), Sparse = T, comp = 1)
       gc()
       
@@ -1269,123 +1383,154 @@ simu_func <- function(n, rho, time_num, p_X, p_Y, comp, p_ture, seed){
       }
       
       # CCA loading
-      # CCVA
+      # FACD
+      sign_X <- sign(sum(Result_SLCCA$load_X[[1]] * dat$load_X[[1]]))
+      if(sign_X == 0) sign_X <- 1
+      
       Load_err_X_SLCCA <- sum(sapply(1:p_X, function(j){
-        if(sum(abs(dat$load_X[[1]][j,])) != 0){
-          sum((sign(sum(Result_SLCCA$load_X[[1]][j,] * dat$load_X[[1]][j,])) * Result_SLCCA$load_X[[1]][j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
-        }else{
-          sum((Result_SLCCA$load_X[[1]][j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
-        }
-      })) /  sum(sapply(1:p_X, function(j){
+        sum((sign_X * Result_SLCCA$load_X[[1]][j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
+      })) / sum(sapply(1:p_X, function(j){
         sum((dat$load_X[[1]][j,]) ^ 2) * 0.005
       }))
+      
+      
+      sign_Y <- sign(sum(Result_SLCCA$load_Y[[1]] * dat$load_Y[[1]]))
+      if(sign_Y == 0) sign_Y <- 1
       
       Load_err_Y_SLCCA <- sum(sapply(1:p_Y, function(j){
-        if(sum(abs(dat$load_Y[[1]][j,])) != 0){
-          sum((sign(sum(Result_SLCCA$load_X[[1]][j,] * dat$load_X[[1]][j,])) * Result_SLCCA$load_X[[1]][j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
-        }else{
-          sum((Result_SLCCA$load_Y[[1]][j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
-        }
-      })) /  sum(sapply(1:p_Y, function(j){
+        sum((sign_Y * Result_SLCCA$load_Y[[1]][j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
+      })) / sum(sapply(1:p_Y, function(j){
         sum((dat$load_Y[[1]][j,]) ^ 2) * 0.005
       }))
+      
       
       # LCCA
-      load_X <- matrix(Result_LCCA$re.X$phix0, nrow = p_X)[,1] +  matrix(Result_LCCA$re.X$phix1, nrow = p_X)[,1] %*% t(seq(0, 1, 1 / 200))
+      load_X <- matrix(Result_LCCA$re.X$phix0, nrow = p_X)[,1] +
+        matrix(Result_LCCA$re.X$phix1, nrow = p_X)[,1] %*%
+        t(seq(0, 1, 1 / 200))
+      
       norm_X <- sum(sapply(1:p_X, function(j){
         sum((load_X[j,]) ^ 2) * 0.005
       }))
-      load_X <- load_X / norm_X
+      
+      load_X <- load_X / sqrt(norm_X)
+      
+      sign_X <- sign(sum(load_X * dat$load_X[[1]]))
+      if(sign_X == 0) sign_X <- 1
+      
       Load_err_X_LCCA <- sum(sapply(1:p_X, function(j){
-        if(sum(abs(dat$load_X[[1]][j,])) != 0){
-          sum((sign(sum(load_X[j,] * dat$load_X[[1]][j,])) * load_X[j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
-        }else{
-          sum((load_X[j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
-        }
-        
-      })) /  sum(sapply(1:p_X, function(j){
+        sum((sign_X * load_X[j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
+      })) / sum(sapply(1:p_X, function(j){
         sum((dat$load_X[[1]][j,]) ^ 2) * 0.005
       }))
       
-      load_Y <- matrix(Result_LCCA$re.Y$phix0, nrow = p_Y)[,1] +  matrix(Result_LCCA$re.Y$phix1, nrow = p_Y)[,1] %*% t(seq(0, 1, 1 / 200))
+      
+      load_Y <- matrix(Result_LCCA$re.Y$phix0, nrow = p_Y)[,1] +
+        matrix(Result_LCCA$re.Y$phix1, nrow = p_Y)[,1] %*%
+        t(seq(0, 1, 1 / 200))
+      
       norm_Y <- sum(sapply(1:p_Y, function(j){
         sum((load_Y[j,]) ^ 2) * 0.005
       }))
-      load_Y <- load_Y / norm_Y
+      
+      load_Y <- load_Y / sqrt(norm_Y)
+      
+      sign_Y <- sign(sum(load_Y * dat$load_Y[[1]]))
+      if(sign_Y == 0) sign_Y <- 1
+      
       Load_err_Y_LCCA <- sum(sapply(1:p_Y, function(j){
-        if(sum(abs(dat$load_Y[[1]][j,])) != 0){
-          sum((sign(sum(load_Y[j,] * dat$load_Y[[1]][j,])) * load_Y[j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
-        }else{
-          sum((load_Y[j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
-        }
-      })) /  sum(sapply(1:p_Y, function(j){
+        sum((sign_Y * load_Y[j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
+      })) / sum(sapply(1:p_Y, function(j){
         sum((dat$load_Y[[1]][j,]) ^ 2) * 0.005
       }))
+      
       
       # FSCCA
-      load_X <- matrix(Result_FSCCA$fit_opt$fit_cca$X_coef, ncol = 3, byrow = T) %*% (t(poly(seq(0, 1, 1 / 200), degree = 3)) / norm_ploy)
+      load_X <- matrix(
+        Result_FSCCA$fit_opt$fit_cca$X_coef,
+        ncol = 3,
+        byrow = T
+      ) %*% (
+        t(poly(seq(0, 1, 1 / 200), degree = 3)) / norm_ploy
+      )
+      
       norm_X <- sum(sapply(1:p_X, function(j){
         sum((load_X[j,]) ^ 2) * 0.005
       }))
-      load_X <- load_X / norm_X
+      
+      load_X <- load_X / sqrt(norm_X)
+      
+      sign_X <- sign(sum(load_X * dat$load_X[[1]]))
+      if(sign_X == 0) sign_X <- 1
+      
       Load_err_X_FSCCA <- sum(sapply(1:p_X, function(j){
-        if(sum(abs(dat$load_X[[1]][j,])) != 0){
-          sum((sign(sum(load_X[j,] * dat$load_X[[1]][j,])) * load_X[j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
-        }else{
-          sum((load_X[j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
-        }
-        
-      })) /  sum(sapply(1:p_X, function(j){
+        sum((sign_X * load_X[j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
+      })) / sum(sapply(1:p_X, function(j){
         sum((dat$load_X[[1]][j,]) ^ 2) * 0.005
       }))
       
-      load_Y <- matrix(Result_FSCCA$fit_opt$fit_cca$Y_coef, ncol = 3, byrow = T) %*% (t(poly(seq(0, 1, 1 / 200), degree = 3)) / norm_ploy)
+      
+      load_Y <- matrix(
+        Result_FSCCA$fit_opt$fit_cca$Y_coef,
+        ncol = 3,
+        byrow = T
+      ) %*% (
+        t(poly(seq(0, 1, 1 / 200), degree = 3)) / norm_ploy
+      )
+      
       norm_Y <- sum(sapply(1:p_Y, function(j){
         sum((load_Y[j,]) ^ 2) * 0.005
       }))
-      load_Y <- load_Y / norm_Y
+      
+      load_Y <- load_Y / sqrt(norm_Y)
+      
+      sign_Y <- sign(sum(load_Y * dat$load_Y[[1]]))
+      if(sign_Y == 0) sign_Y <- 1
+      
       Load_err_Y_FSCCA <- sum(sapply(1:p_Y, function(j){
-        if(sum(abs(dat$load_Y[[1]][j,])) != 0){
-          sum((sign(sum(load_Y[j,] * dat$load_Y[[1]][j,])) * load_Y[j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
-        }else{
-          sum((load_Y[j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
-        }
-      })) /  sum(sapply(1:p_Y, function(j){
+        sum((sign_Y * load_Y[j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
+      })) / sum(sapply(1:p_Y, function(j){
         sum((dat$load_Y[[1]][j,]) ^ 2) * 0.005
       }))
+      
       
       # MFPCA
       load_X <- t(sapply(1:p_X, function(j){
         MFPCA_X$functions[[j]]@X
       }))
+      
       norm_X <- sum(sapply(1:p_X, function(j){
         sum((load_X[j,]) ^ 2) * 0.005
       }))
-      load_X <- load_X / norm_X
+      
+      load_X <- load_X / sqrt(norm_X)
+      
+      sign_X <- sign(sum(load_X * dat$load_X[[1]]))
+      if(sign_X == 0) sign_X <- 1
+      
       Load_err_X_MFPCA <- sum(sapply(1:p_X, function(j){
-        if(sum(abs(dat$load_X[[1]][j,])) != 0){
-          sum((sign(sum(load_X[j,] * dat$load_X[[1]][j,])) * load_X[j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
-        }else{
-          sum((load_X[j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
-        }
-      })) /  sum(sapply(1:p_X, function(j){
+        sum((sign_X * load_X[j,] - dat$load_X[[1]][j,]) ^ 2) * 0.005
+      })) / sum(sapply(1:p_X, function(j){
         sum((dat$load_X[[1]][j,]) ^ 2) * 0.005
       }))
+      
       
       load_Y <- t(sapply(1:p_Y, function(j){
         MFPCA_Y$functions[[j]]@X
       }))
+      
       norm_Y <- sum(sapply(1:p_Y, function(j){
         sum((load_Y[j,]) ^ 2) * 0.005
       }))
-      load_Y <- load_Y / norm_Y
+      
+      load_Y <- load_Y / sqrt(norm_Y)
+      
+      sign_Y <- sign(sum(load_Y * dat$load_Y[[1]]))
+      if(sign_Y == 0) sign_Y <- 1
+      
       Load_err_Y_MFPCA <- sum(sapply(1:p_Y, function(j){
-        if(sum(abs(dat$load_Y[[1]][j,])) != 0){
-          sum((sign(sum(load_Y[j,] * dat$load_Y[[1]][j,])) * load_Y[j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
-        }else{
-          sum((load_Y[j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
-        }
-      })) /  sum(sapply(1:p_Y, function(j){
+        sum((sign_Y * load_Y[j,] - dat$load_Y[[1]][j,]) ^ 2) * 0.005
+      })) / sum(sapply(1:p_Y, function(j){
         sum((dat$load_Y[[1]][j,]) ^ 2) * 0.005
       }))
       

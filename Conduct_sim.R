@@ -14,7 +14,7 @@ source("LCCA_function.R")
 ################################################################################
 # Simulation parameters
 rho      <- 0.8      # Correlation
-comp     <- 4        # Number of components
+comp     <- 20        # Number of components
 time_num <- 8        # maximum of time points
 p_ture   <- 10       # Number of important variables
 
@@ -59,7 +59,7 @@ for(i in 1:3){
   )
   latex_res <- rbind(latex_res, f)
 }
-latex_res <- data.frame(rep(c("LCCA", "SCCA", "MFPCA", "FSCCA", "CCVA"), 3), latex_res)
+latex_res <- data.frame(rep(c("LCCA", "SCCA", "MFPCA", "FSCCA", "FACD"), 3), latex_res)
 xtable::xtable(latex_res)
 
 ################################################################################
@@ -74,7 +74,7 @@ for(i in 1:3){
     load(paste0("Result/Result_", n, "_", p_X, ".rda"))
     
     result <- sapply(1:length(Result), function(h) {
-      # --- CCVA ---
+      # --- FACD ---
       FNR_X_SLCCA <- sum(sapply(1:p_ture, function(j) {
         sum(j == Result[[h]]$Result_SLCCA$var_X[[1]])
       }) == 0) / p_ture
@@ -189,8 +189,8 @@ for(i in 1:3){
     )
     
     var_error <- rbind(var_error, 
-                       data.frame(result * 300,
-                                  Method = rep(c(rep("CCVA", 6), rep("SCCA", 6), rep("FSCCA", 6)), 1),
+                       data.frame(result * 100,
+                                  Method = rep(c(rep("FACD", 6), rep("SCCA", 6), rep("FSCCA", 6)), 1),
                                   Label  = rep(c(rep("The first dataset", 3), rep("The second dataset", 3)), 3),
                                   Type   = rep(c("FNR", "FPR", "OER"), 6),
                                   n      = rep(paste0("n=", n), 18),
@@ -202,7 +202,7 @@ for(i in 1:3){
 # Format factors and column names for plotting
 var_error$n <- factor(var_error$n, levels = paste0("n=", sample_list))
 colnames(var_error)[1:3] <- c("low", "mean", "upper")
-var_error$Method <- factor(var_error$Method, levels = c("SCCA", "FSCCA", "CCVA"))
+var_error$Method <- factor(var_error$Method, levels = c("SCCA", "FSCCA", "FACD"))
 
 ################################################################################
 # 5. Plotting: Variable Selection Errors (FNR and FPR)
@@ -249,7 +249,7 @@ p2 <- ggplot(plot_dat) +
   scale_fill_manual(values = c("blue", "orange", "red"))
 p2
 
-combined_var_plot <- p1 + p2 & theme(legend.position = "bottom")
+combined_var_plot <- p2 + p1 & theme(legend.position = "bottom")
 combined_var_plot + plot_layout(guides = "collect", ncol = 2)
 ggsave(paste0("Figure/", "CCA_var_sim", ".pdf"), width = 9, height = 5, dpi = 300)
 
@@ -265,13 +265,13 @@ for(i in 1:3){
     load(paste0("Result/Result_", n, "_", p_X, ".rda"))
     
     result <- sapply(1:length(Result), function(h) {
-      unlist(Result[[h]]$loa_error) / p_X
+      unlist(Result[[h]]$loa_error) 
     })
     
     loa_error <- rbind(loa_error, 
                        data.frame(Error  = c(t(result)),
-                                  Method = rep(c(rep("CCVA", 300), rep("LCCA", 300), rep("FSCCA", 300), rep("MFPCA", 300)), 2),
-                                  Label  = c(rep("The first dataset", 4 * 300), rep("The second dataset", 4 * 300)),
+                                  Method = rep(c(rep("FACD", 100), rep("LCCA", 100), rep("FSCCA", 100), rep("MFPCA", 100)), 2),
+                                  Label  = c(rep("The first dataset", 4 * 100), rep("The second dataset", 4 * 100)),
                                   n      = rep(paste0("n=", n), length(c(t(result)))),
                                   p      = rep(r, length(c(t(result))))
                        )
@@ -280,7 +280,7 @@ for(i in 1:3){
 }
 
 loa_error$n <- factor(loa_error$n, levels = paste0("n=", sample_list))
-loa_error$Method <- factor(loa_error$Method, levels = c("LCCA", "FSCCA", "MFPCA", "CCVA"))
+loa_error$Method <- factor(loa_error$Method, levels = c("LCCA", "FSCCA", "MFPCA", "FACD"))
 loa_error$p <- factor(loa_error$p)
 
 # Plot loading errors for the first dataset

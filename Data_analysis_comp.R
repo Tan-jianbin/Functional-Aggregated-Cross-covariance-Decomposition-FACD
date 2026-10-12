@@ -31,8 +31,8 @@ cv_mark <- lapply(1:cv_num, function(k){
   floor(seq(k, n, cv_num))
 }) # CV mark
 
-## CCVA
-error_CCVA <- sapply(1:cv_num, function(k){
+## FACD
+error_FACD <- sapply(1:cv_num, function(k){
   
   dat_X_train <- dat_X 
   dat_Y_train <- dat_Y
@@ -54,16 +54,16 @@ error_CCVA <- sapply(1:cv_num, function(k){
   dat_Y_train$n <- length(sam_mark)
   dat_Y_train$sub_label <- dat_Y_train$sub_label[sam_mark]
   
-  Result_CCVA_train <- CCVA(grid_num = grid_num, 
-                            dat_X, dat_Y,
-                            max_var = max_var, # Maximum number of selected features
-                            length_tun = 30, # Number of evaluated tuning parameters for two datasets
-                            print_tuning = F,
-                            comp = 1,
-                            FVE = 0.95 # Fraction of variance explained
+  Result_FACD_train <- FACD(grid_num = grid_num, 
+                              dat_X, dat_Y,
+                              max_var = max_var, # Maximum number of selected features
+                              length_tun = 30, # Number of evaluated tuning parameters for two datasets
+                              print_tuning = F,
+                              comp = 1,
+                              FVE = 0.95 # Fraction of variance explained
   )
   
-  load_X <- Result_CCVA_train$load_X[[1]]
+  load_X <- Result_FACD_train$load_X[[1]]
   X_cca <- sapply(cv_mark[[k]], function(i){
     sum(sapply(1:p_X, function(l){
       mark <- sapply(1:length(dat_X$dat[[l]][[i]]$time), function(k) which.min(abs(dat_X$dat[[l]][[i]]$time[k] - time_grid)))
@@ -71,7 +71,7 @@ error_CCVA <- sapply(1:cv_num, function(k){
     }))
   })
   
-  load_Y <- Result_CCVA_train$load_Y[[1]]
+  load_Y <- Result_FACD_train$load_Y[[1]]
   Y_cca <- sapply(cv_mark[[k]], function(i){
     sum(sapply(1:p_Y, function(l){
       mark <- sapply(1:length(dat_Y$dat[[l]][[i]]$time), function(k) which.min(abs(dat_Y$dat[[l]][[i]]$time[k] - time_grid)))
@@ -89,7 +89,7 @@ error_CCVA <- sapply(1:cv_num, function(k){
 })
 
 ### CV correlation
-mean(error_CCVA) 
+mean(error_FACD) 
 
 ################################################################################
 ## LCCA
@@ -296,12 +296,12 @@ mean(error_MFPCA)
 
 ################################################################################
 # Plot
-dat_plot <- rbind(data.frame(Cor = error_CCVA, Method = rep("CCVA", length(error_CCVA))),
+dat_plot <- rbind(data.frame(Cor = error_FACD, Method = rep("FACD", length(error_FACD))),
                   data.frame(Cor = error_LCCA, Method = rep("LCCA", length(error_LCCA))),
-                  data.frame(Cor = error_FSCCA, Method = rep("FSCCA", length(error_CCVA))),
-                  data.frame(Cor = error_MFPCA, Method = rep("MFPCA", length(error_CCVA)))
+                  data.frame(Cor = error_FSCCA, Method = rep("FSCCA", length(error_FACD))),
+                  data.frame(Cor = error_MFPCA, Method = rep("MFPCA", length(error_FACD)))
 )
-dat_plot$Method <- factor(dat_plot$Method, levels = c("LCCA", "FSCCA", "MFPCA", "CCVA"))
+dat_plot$Method <- factor(dat_plot$Method, levels = c("LCCA", "FSCCA", "MFPCA", "FACD"))
 
 save(dat_plot, file = "Result/CV_result.rda", version = 2)
 

@@ -7,7 +7,7 @@ sfInit(parallel = T, cpus = 40)
 sfExport("n", "rho", "time_num", "p_X", "p_Y", "comp", "p_ture")
 sfSource("Function.R")
 sfSource("LCCA_function.R")
-Result <- sfLapply(seq(1, 10000, length.out = 300), simu_func,
+Result <- sfLapply(seq(1, 10000, length.out = 100), simu_func,
                    n = n, rho = rho, time_num = time_num,
                    p_X = p_X, p_Y = p_Y, comp = comp, p_ture = p_ture)
 
